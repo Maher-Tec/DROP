@@ -1,12 +1,8 @@
 import 'package:flutter/material.dart';
 import '../config/theme.dart';
 
-/// DROP TRAIL - Motion blur trailing effect behind falling drop
-///
-/// Creates a sequence of fading, smaller drops that follow the main drop
-/// to simulate motion blur and add premium feel to the falling animation.
 class DropTrail extends StatelessWidget {
-  final double fallProgress; // 0.0 to 1.0
+  final double fallProgress;
   final double startY;
   final double endY;
 
@@ -51,7 +47,6 @@ class _TrailPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final centerX = size.width / 2;
 
-    // Draw trail segments (fading ghosts of the drop)
     const trailCount = 8;
     final trailSpacing = 12.0 * progress.clamp(0.3, 1.0);
 
@@ -62,7 +57,6 @@ class _TrailPainter extends CustomPainter {
 
       if (yOffset < 0) continue;
 
-      // Trail drop shape (simplified)
       final paint = Paint()
         ..color = DropTheme.dropAccent.withValues(alpha: opacity)
         ..style = PaintingStyle.fill;
@@ -71,7 +65,6 @@ class _TrailPainter extends CustomPainter {
       final dropWidth = 12.0 * scale;
       final dropHeight = 18.0 * scale;
 
-      // Teardrop shape
       dropPath.moveTo(centerX, yOffset);
       dropPath.quadraticBezierTo(
         centerX + dropWidth,
@@ -88,7 +81,6 @@ class _TrailPainter extends CustomPainter {
 
       canvas.drawPath(dropPath, paint);
 
-      // Subtle glow for each trail segment
       final glowPaint = Paint()
         ..color = DropTheme.glowColor.withValues(alpha: opacity * 0.3)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
@@ -100,7 +92,6 @@ class _TrailPainter extends CustomPainter {
       );
     }
 
-    // Motion blur streaks
     final streakPaint = Paint()
       ..shader = LinearGradient(
         begin: Alignment.topCenter,
@@ -112,7 +103,6 @@ class _TrailPainter extends CustomPainter {
         ],
       ).createShader(Rect.fromLTWH(centerX - 2, 0, 4, size.height - 30));
 
-    // Central motion streak
     canvas.drawRect(
       Rect.fromLTWH(centerX - 1.5, 10, 3, size.height - 50),
       streakPaint,

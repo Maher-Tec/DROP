@@ -10,20 +10,6 @@ import '../widgets/particle_burst.dart';
 import '../widgets/splash_droplets.dart';
 import 'after_drop_screen.dart';
 
-/// DROP ANIMATION SCREEN - THE CORE MAGIC (Premium Pro Max)
-///
-/// Purpose: Emotional release moment.
-///
-/// Animation sequence:
-/// 1. Text fades out
-/// 2. Text morphs into a single water drop
-/// 3. Drop falls slowly with subtle trail
-/// 4. Hits lake surface
-/// 5. Ripples expand outward beautifully
-/// 6. Drop disappears completely
-///
-/// Duration: ~3.5 seconds
-/// No user interaction
 class DropAnimationScreen extends StatefulWidget {
   final String thought;
 
@@ -35,13 +21,11 @@ class DropAnimationScreen extends StatefulWidget {
 
 class _DropAnimationScreenState extends State<DropAnimationScreen>
     with TickerProviderStateMixin {
-  // Animation controllers
   late AnimationController _textFadeController;
   late AnimationController _dropFormController;
   late AnimationController _dropFallController;
   late AnimationController _rippleController;
 
-  // Animations
   late Animation<double> _textFade;
   late Animation<double> _textScale;
   late Animation<double> _dropForm;
@@ -53,28 +37,24 @@ class _DropAnimationScreenState extends State<DropAnimationScreen>
   bool _showText = true;
   bool _showDrop = false;
   bool _showRipples = false;
-  bool _showSplash = false; // Splash droplets on impact
-  bool _showBurst = false; // Particle burst on impact
-  bool _showFlash = false; // Screen flash on impact
+  bool _showSplash = false;
+  bool _showBurst = false;
+  bool _showFlash = false;
 
   @override
   void initState() {
     super.initState();
 
-    // Immersive full-screen experience
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
-    // Initialize animations
     _initAnimations();
 
-    // Start the sequence
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _startAnimationSequence();
     });
   }
 
   void _initAnimations() {
-    // Phase 1: Text fades and shrinks (1s)
     _textFadeController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1000),
@@ -86,7 +66,6 @@ class _DropAnimationScreenState extends State<DropAnimationScreen>
       CurvedAnimation(parent: _textFadeController, curve: Curves.easeIn),
     );
 
-    // Phase 2: Drop forms (0.4s)
     _dropFormController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 400),
@@ -95,7 +74,6 @@ class _DropAnimationScreenState extends State<DropAnimationScreen>
       CurvedAnimation(parent: _dropFormController, curve: Curves.easeOutBack),
     );
 
-    // Phase 3: Drop falls (1.3s)
     _dropFallController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1300),
@@ -113,7 +91,6 @@ class _DropAnimationScreenState extends State<DropAnimationScreen>
       ),
     );
 
-    // Phase 4: Ripples expand (1.8s)
     _rippleController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1800),
@@ -133,12 +110,10 @@ class _DropAnimationScreenState extends State<DropAnimationScreen>
     if (!mounted) return;
     final reducedMotion = MediaQuery.disableAnimationsOf(context);
 
-    // Phase 1: Fade out text
     await Future.delayed(Duration(milliseconds: reducedMotion ? 100 : 300));
     if (!mounted) return;
     _textFadeController.forward();
 
-    // Phase 2: Form drop
     await Future.delayed(Duration(milliseconds: reducedMotion ? 250 : 900));
     if (!mounted) return;
     setState(() {
@@ -147,12 +122,10 @@ class _DropAnimationScreenState extends State<DropAnimationScreen>
     });
     _dropFormController.forward();
 
-    // Phase 3: Drop falls
     await Future.delayed(Duration(milliseconds: reducedMotion ? 180 : 400));
     if (!mounted) return;
     _dropFallController.forward();
 
-    // Phase 4: Ripples on impact - play water drop sound + haptic + splash + burst + flash
     await Future.delayed(Duration(milliseconds: reducedMotion ? 600 : 1000));
     if (!mounted) return;
     soundService.playWaterDrop();
@@ -165,11 +138,9 @@ class _DropAnimationScreenState extends State<DropAnimationScreen>
     });
     _rippleController.forward();
 
-    // Hide flash after brief moment
     await Future.delayed(const Duration(milliseconds: 150));
     if (mounted) setState(() => _showFlash = false);
 
-    // Phase 5: Transition to After Drop screen
     await Future.delayed(const Duration(milliseconds: 1600));
     _navigateToAfterDrop();
   }
@@ -205,7 +176,6 @@ class _DropAnimationScreenState extends State<DropAnimationScreen>
     final themeService = context.watch<ThemeService>();
     final isDarkMode = themeService.isDarkMode;
 
-    // Impact point (where drop hits water)
     final impactY = size.height * 0.62;
     final startY = size.height * 0.32;
 
@@ -219,7 +189,6 @@ class _DropAnimationScreenState extends State<DropAnimationScreen>
         child: Stack(
           alignment: Alignment.center,
           children: [
-            // Fading thought text
             if (_showText && widget.thought.isNotEmpty)
               AnimatedBuilder(
                 animation: Listenable.merge([_textFade, _textScale]),
@@ -247,7 +216,6 @@ class _DropAnimationScreenState extends State<DropAnimationScreen>
                 },
               ),
 
-            // Falling drop with trail
             if (_showDrop)
               AnimatedBuilder(
                 animation: Listenable.merge([_dropForm, _dropFall, _dropFade]),
@@ -257,7 +225,6 @@ class _DropAnimationScreenState extends State<DropAnimationScreen>
 
                   return Stack(
                     children: [
-                      // Motion trail behind the drop
                       if (_dropFall.value > 0.05 && _dropFall.value < 0.95)
                         Positioned(
                           top: startY,
@@ -271,7 +238,6 @@ class _DropAnimationScreenState extends State<DropAnimationScreen>
                             ),
                           ),
                         ),
-                      // Main drop
                       Positioned(
                         top: currentY,
                         left: size.width / 2 - 12,
@@ -291,7 +257,6 @@ class _DropAnimationScreenState extends State<DropAnimationScreen>
                 },
               ),
 
-            // Premium ripples on impact
             if (_showRipples)
               Positioned(
                 top: impactY - 10,
@@ -311,7 +276,6 @@ class _DropAnimationScreenState extends State<DropAnimationScreen>
                 ),
               ),
 
-            // Splash droplets on impact
             if (_showSplash)
               Positioned(
                 top: impactY - 80,
@@ -319,7 +283,6 @@ class _DropAnimationScreenState extends State<DropAnimationScreen>
                 child: const SplashDroplets(),
               ),
 
-            // Particle burst on impact
             if (_showBurst)
               Positioned(
                 top: impactY - 125,
@@ -327,7 +290,6 @@ class _DropAnimationScreenState extends State<DropAnimationScreen>
                 child: const ParticleBurst(),
               ),
 
-            // Screen flash on impact
             if (_showFlash)
               Positioned.fill(
                 child: AnimatedOpacity(
@@ -360,7 +322,6 @@ class _DropAnimationScreenState extends State<DropAnimationScreen>
   }
 }
 
-/// Paints the premium falling water drop
 class _FallingDropPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
@@ -392,7 +353,6 @@ class _FallingDropPainter extends CustomPainter {
 
     canvas.drawPath(path, paint);
 
-    // Highlight
     final highlightPaint = Paint()
       ..color = Colors.white.withValues(alpha: 0.5)
       ..style = PaintingStyle.fill;
@@ -411,7 +371,6 @@ class _FallingDropPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-/// Paints premium expanding ripples
 class _PremiumRipplePainter extends CustomPainter {
   final double progress;
 
@@ -421,7 +380,6 @@ class _PremiumRipplePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, 10);
 
-    // Multiple expanding ripples with staggered timing
     for (int i = 0; i < 5; i++) {
       final delay = i * 0.12;
       final adjustedProgress = ((progress - delay) / (1 - delay)).clamp(
@@ -442,7 +400,6 @@ class _PremiumRipplePainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = (1.8 - (i * 0.2)).clamp(0.5, 2.0);
 
-      // Ellipse for water perspective
       canvas.drawOval(
         Rect.fromCenter(
           center: center,
@@ -453,7 +410,6 @@ class _PremiumRipplePainter extends CustomPainter {
       );
     }
 
-    // Inner splash highlight
     if (progress < 0.3) {
       final splashOpacity = (1 - progress / 0.3) * 0.6;
       final splashPaint = Paint()

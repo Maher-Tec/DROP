@@ -4,15 +4,6 @@ import '../config/theme.dart';
 import '../services/haptic_service.dart';
 import '../services/theme_service.dart';
 
-/// BREATHING GUIDE - Pre-Write Calming Exercise
-///
-/// A simple 3-breath exercise to calm the user before writing.
-///
-/// Features:
-/// - Expanding/contracting circle animation
-/// - "Breathe in..." / "Breathe out..." text
-/// - 3 breath cycles
-/// - Optional skip button
 class BreathingGuide extends StatefulWidget {
   final VoidCallback onComplete;
   final VoidCallback? onSkip;
@@ -36,7 +27,6 @@ class _BreathingGuideState extends State<BreathingGuide>
   void initState() {
     super.initState();
 
-    // Single breath cycle: 4 seconds in, 4 seconds out
     _breathController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 4),
@@ -46,7 +36,6 @@ class _BreathingGuideState extends State<BreathingGuide>
       CurvedAnimation(parent: _breathController, curve: Curves.easeInOut),
     );
 
-    // Start breathing
     _startBreathing();
   }
 
@@ -54,7 +43,6 @@ class _BreathingGuideState extends State<BreathingGuide>
     for (int i = 0; i < _totalBreaths; i++) {
       if (!mounted) return;
 
-      // Breathe in
       setState(() {
         _currentBreath = i + 1;
         _isBreathingIn = true;
@@ -64,13 +52,11 @@ class _BreathingGuideState extends State<BreathingGuide>
 
       if (!mounted) return;
 
-      // Breathe out
       setState(() => _isBreathingIn = false);
       HapticService.gentleTap();
       await _breathController.reverse();
     }
 
-    // Complete
     if (mounted) {
       await Future.delayed(const Duration(milliseconds: 500));
       if (mounted) widget.onComplete();
@@ -101,7 +87,6 @@ class _BreathingGuideState extends State<BreathingGuide>
         child: Stack(
           alignment: Alignment.center,
           children: [
-            // Skip button (top left)
             Positioned(
               top: 16,
               left: 16,
@@ -122,11 +107,9 @@ class _BreathingGuideState extends State<BreathingGuide>
               ),
             ),
 
-            // Main content
             Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Breath counter
                 Text(
                   'Breath $_currentBreath of $_totalBreaths',
                   style: DropTheme.getHintStyle(
@@ -136,7 +119,6 @@ class _BreathingGuideState extends State<BreathingGuide>
 
                 SizedBox(height: size.height * 0.08),
 
-                // Breathing circle
                 AnimatedBuilder(
                   animation: _breathAnimation,
                   builder: (context, child) {
@@ -203,7 +185,6 @@ class _BreathingGuideState extends State<BreathingGuide>
 
                 SizedBox(height: size.height * 0.08),
 
-                // Instruction text
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 300),
                   child: Text(

@@ -38,9 +38,6 @@ void main() {
     );
 
     await tester.pumpWidget(const SizedBox());
-    // Disposed here rather than via addTearDown: the binding's pending-timer
-    // check runs before addTearDown callbacks, and ThemeService owns a
-    // periodic timer that must be cancelled before the test body ends.
     themeService.dispose();
   });
 }

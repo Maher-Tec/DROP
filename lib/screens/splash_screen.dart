@@ -6,18 +6,6 @@ import '../widgets/ripple_effect.dart';
 import 'home_screen.dart';
 import 'onboarding_screen.dart';
 
-/// SPLASH SCREEN - Premium Pro Max
-///
-/// Purpose: Set the emotional tone immediately.
-/// User should feel: "This app is quiet, safe, and intentional."
-///
-/// UI:
-/// - Deep blue → teal gradient background
-/// - One slow water ripple expanding from center
-/// - App name: DROP
-/// - Subtitle: "Let it go."
-/// - Auto-transition after 2.5 seconds
-/// - Starts playing relax ambient sound
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -38,10 +26,8 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
 
-    // Start playing relaxing ambient sound
     soundService.playRelax();
 
-    // Immersive full-screen experience
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
@@ -50,7 +36,6 @@ class _SplashScreenState extends State<SplashScreen>
       ),
     );
 
-    // Fade in animation
     _fadeController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
@@ -60,7 +45,6 @@ class _SplashScreenState extends State<SplashScreen>
       curve: Curves.easeIn,
     );
 
-    // Ripple expand animation
     _rippleExpandController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2500),
@@ -69,7 +53,6 @@ class _SplashScreenState extends State<SplashScreen>
       CurvedAnimation(parent: _rippleExpandController, curve: Curves.easeOut),
     );
 
-    // Drop pulse animation
     _dropPulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2000),
@@ -78,22 +61,18 @@ class _SplashScreenState extends State<SplashScreen>
       CurvedAnimation(parent: _dropPulseController, curve: Curves.easeInOut),
     );
 
-    // Start animations
     _fadeController.forward();
     _rippleExpandController.forward();
     _dropPulseController.repeat(reverse: true);
 
-    // Check onboarding and auto-transition
     _checkOnboardingAndNavigate();
   }
 
   void _checkOnboardingAndNavigate() async {
-    // Wait for splash animation
     await Future.delayed(DropTheme.splashDuration);
 
     if (!mounted) return;
 
-    // Check if onboarding is completed
     final onboardingCompleted = await OnboardingScreen.isCompleted();
 
     if (onboardingCompleted) {
@@ -145,7 +124,6 @@ class _SplashScreenState extends State<SplashScreen>
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final isSmall = DropTheme.isSmallDevice(context);
-    // Responsive sizing
     final rippleSize = size.width * 0.85;
 
     return Scaffold(
@@ -164,7 +142,6 @@ class _SplashScreenState extends State<SplashScreen>
               return Stack(
                 alignment: Alignment.center,
                 children: [
-                  // Expanding ripple circles
                   Transform.scale(
                     scale: MediaQuery.disableAnimationsOf(context)
                         ? 1
@@ -177,12 +154,10 @@ class _SplashScreenState extends State<SplashScreen>
                     ),
                   ),
 
-                  // Main content
                   Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      // Premium Logo ("The Pure Drop") with circular mask
                       Transform.scale(
                         scale: MediaQuery.disableAnimationsOf(context)
                             ? 1

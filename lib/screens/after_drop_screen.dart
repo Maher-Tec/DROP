@@ -8,7 +8,6 @@ import '../services/sound_service.dart';
 import '../widgets/lake_background.dart';
 import 'home_screen.dart';
 
-/// Closure without a countdown, assessment, or invitation to repeat.
 class AfterDropScreen extends StatefulWidget {
   const AfterDropScreen({super.key});
   @override

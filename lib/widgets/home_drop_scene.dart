@@ -2,7 +2,6 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../config/theme.dart';
 
-/// A quiet lake vignette painted on a transparent canvas.
 class HomeDropScene extends StatefulWidget {
   final bool dark;
   final bool animate;

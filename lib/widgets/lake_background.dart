@@ -6,9 +6,6 @@ import '../services/theme_service.dart';
 import 'floating_particles.dart';
 import 'moonlight_glow.dart';
 
-/// Premium realistic lake background with animated water surface
-/// Features: deep blue gradient, subtle waves, light reflections, shimmer,
-/// floating particles, moonlight at night, starfield
 class LakeBackground extends StatefulWidget {
   final Widget child;
   final bool animate;
@@ -41,13 +38,11 @@ class _LakeBackgroundState extends State<LakeBackground>
   void initState() {
     super.initState();
 
-    // Very slow wave animation
     _waveController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 12),
     );
 
-    // Subtle shimmer/reflection animation
     _shimmerController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 6),
@@ -72,9 +67,6 @@ class _LakeBackgroundState extends State<LakeBackground>
     if (widget.animate != oldWidget.animate) _syncAnimation();
   }
 
-  /// Starts or stops the shared wave/shimmer tickers to match whether the
-  /// screen wants motion right now. Kept out of build() so it only runs when
-  /// something that affects the decision actually changes, not every frame.
   void _syncAnimation() {
     final shouldAnimate =
         widget.animate && !MediaQuery.disableAnimationsOf(context);
@@ -104,12 +96,8 @@ class _LakeBackgroundState extends State<LakeBackground>
     final animate = _animating;
     final isNight = DropTheme.isNightTime() || DropTheme.isEvening();
 
-    // Everything below is independent of the wave/shimmer animation value,
-    // so it's passed as AnimatedBuilder's `child` and built once per real
-    // rebuild instead of once per animation tick (~60/sec).
     final staticLayer = Stack(
       children: [
-        // Floating particles (dust specs, enhanced at night)
         if (widget.showParticles && animate)
           Positioned.fill(
             child: FloatingParticles(
@@ -120,7 +108,6 @@ class _LakeBackgroundState extends State<LakeBackground>
             ),
           ),
 
-        // Moonlight glow at night
         if (widget.showMoonlight && isNight)
           Positioned(
             top: 0,
@@ -131,7 +118,6 @@ class _LakeBackgroundState extends State<LakeBackground>
             ),
           ),
 
-        // Content
         widget.child,
       ],
     );
@@ -150,7 +136,6 @@ class _LakeBackgroundState extends State<LakeBackground>
           ),
           child: Stack(
             children: [
-              // Subtle wave patterns
               if (widget.showWaves && animate)
                 Positioned.fill(
                   child: RepaintBoundary(
@@ -162,7 +147,6 @@ class _LakeBackgroundState extends State<LakeBackground>
                   ),
                 ),
 
-              // Light reflections on water
               if (widget.showReflections && animate)
                 Positioned.fill(
                   child: RepaintBoundary(
@@ -183,7 +167,6 @@ class _LakeBackgroundState extends State<LakeBackground>
   }
 }
 
-/// Paints subtle, slow-moving wave patterns
 class WavePatternPainter extends CustomPainter {
   final double animation;
 
@@ -191,7 +174,6 @@ class WavePatternPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Draw multiple very subtle wave lines across the screen
     for (int i = 0; i < 5; i++) {
       final yBase = size.height * (0.4 + i * 0.12);
       final phase = animation * 2 * math.pi + (i * 0.8);
@@ -225,7 +207,6 @@ class WavePatternPainter extends CustomPainter {
   }
 }
 
-/// Paints very subtle light reflections on the water surface
 class WaterReflectionPainter extends CustomPainter {
   final double animation;
 
@@ -237,7 +218,6 @@ class WaterReflectionPainter extends CustomPainter {
       ..style = PaintingStyle.fill
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 60);
 
-    // Multiple floating light patches (moonlight reflections)
     final reflections = [
       _Reflection(0.2, 0.15, 0.3, 0.08, 0.0),
       _Reflection(0.7, 0.25, 0.25, 0.06, 0.3),

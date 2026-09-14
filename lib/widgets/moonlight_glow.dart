@@ -2,10 +2,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../config/theme.dart';
 
-/// MOONLIGHT GLOW - Premium night mode effect
-///
-/// Creates a soft, dreamy moon reflection on the water
-/// with gentle shimmer animation. Only visible at night.
 class MoonlightGlow extends StatefulWidget {
   final double size;
   final bool animate;
@@ -47,7 +43,6 @@ class _MoonlightGlowState extends State<MoonlightGlow>
     } else if (!animate) {
       _controller.stop();
     }
-    // Only show at night
     if (!DropTheme.isNightTime() && !DropTheme.isEvening()) {
       return const SizedBox.shrink();
     }
@@ -82,7 +77,6 @@ class _MoonlightPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, 0);
 
-    // Main moon glow (soft ellipse)
     final moonGradient = RadialGradient(
       center: Alignment.topCenter,
       radius: 1.0,
@@ -105,7 +99,6 @@ class _MoonlightPainter extends CustomPainter {
 
     canvas.drawOval(moonRect, moonPaint);
 
-    // Shimmer reflection lines on water
     final shimmerPaint = Paint()
       ..color = Colors.white.withValues(
         alpha: (0.15 + shimmerValue * 0.1).clamp(0.0, 0.3),
@@ -113,14 +106,13 @@ class _MoonlightPainter extends CustomPainter {
       ..strokeWidth = 1.5
       ..style = PaintingStyle.stroke;
 
-    final random = Random(42); // Fixed seed for consistent pattern
+    final random = Random(42);
 
     for (int i = 0; i < 8; i++) {
       final yOffset = size.height * 0.3 + (i * size.height * 0.08);
       final xVariation = (random.nextDouble() - 0.5) * size.width * 0.3;
       final width = size.width * (0.1 + random.nextDouble() * 0.15);
 
-      // Animate horizontal position
       final animatedX =
           center.dx + xVariation + sin(shimmerValue * pi * 2 + i) * 10;
 

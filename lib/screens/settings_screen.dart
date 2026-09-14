@@ -6,14 +6,6 @@ import '../services/theme_service.dart';
 import '../widgets/lake_background.dart';
 import '../widgets/reminder_settings.dart';
 
-/// SETTINGS SCREEN - Premium Pro Max
-///
-/// Features:
-/// - Daily reminder toggle with time picker
-/// - Sound on/off toggle
-/// - Night mode override
-/// - Reduced motion mode
-/// - About / Privacy info
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
@@ -22,9 +14,6 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  // Sound isn't exposed as a ChangeNotifier, so it's the one setting this
-  // screen still mirrors locally. It's already loaded by main() before any
-  // screen can be reached, so no loading state is needed here.
   late bool _soundEnabled = soundService.enabled;
 
   Future<void> _toggleSound(bool value) async {
@@ -62,10 +51,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: SafeArea(
           child: Column(
             children: [
-              // Top bar
               _buildTopBar(fontScale, isDarkMode),
 
-              // Settings content
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(20),
@@ -94,7 +81,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         isDarkMode: isDarkMode,
                       ),
 
-                      // Volume slider (only visible when sound enabled)
                       if (_soundEnabled)
                         Padding(
                           padding: const EdgeInsets.only(top: 12),
@@ -106,7 +92,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       _buildSectionTitle('Appearance', fontScale, isDarkMode),
                       const SizedBox(height: 12),
 
-                      // PREMIUM THEME TOGGLE
                       _buildThemeToggle(fontScale),
 
                       const SizedBox(height: 12),
@@ -176,7 +161,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Back button
           GestureDetector(
             onTap: _close,
             child: Container(
@@ -201,7 +185,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
 
-          // Title
           Text(
             'Settings',
             style: DropTheme.getBodyStyle(
@@ -209,7 +192,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ).copyWith(fontSize: 17 * fontScale),
           ),
 
-          // Spacer for balance
           const SizedBox(width: 80),
         ],
       ),
@@ -375,7 +357,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  /// PREMIUM THEME TOGGLE - Sun/Moon with smooth animation
   Widget _buildThemeToggle(double fontScale) {
     return Consumer<ThemeService>(
       builder: (context, themeService, _) {
@@ -410,7 +391,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             child: Row(
               children: [
-                // Icon - Animated between sun and moon
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 400),
                   transitionBuilder: (child, animation) {
@@ -460,7 +440,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ],
                   ),
                 ),
-                // Toggle indicator
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 14,

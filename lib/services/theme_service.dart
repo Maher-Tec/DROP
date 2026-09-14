@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../config/theme.dart';
 
-/// Stores appearance preferences only; never stores thoughts.
 class ThemeService extends ChangeNotifier {
   SharedPreferences? _prefs;
   bool _dark = true;
@@ -33,11 +32,6 @@ class ThemeService extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// The lake's colors and animation speed depend on time of day
-  /// (see [DropTheme.isNightTime]/[DropTheme.isEvening]), but nothing else
-  /// naturally rebuilds the app when a session crosses the evening/night
-  /// boundary. A light periodic check notifies listeners only when that
-  /// boundary is actually crossed, so a long-open session still transitions.
   void _watchTimeOfDay() {
     _timeOfDayTimer?.cancel();
     _timeOfDayTimer = Timer.periodic(const Duration(minutes: 1), (_) {
@@ -60,7 +54,6 @@ class ThemeService extends ChangeNotifier {
 
   Future<void> setDarkMode(bool value) async {
     _dark = value;
-    // An explicit theme choice takes precedence over the night override.
     _night = false;
     DropTheme.nightModeOverride = false;
     notifyListeners();

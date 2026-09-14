@@ -9,7 +9,6 @@ import '../widgets/lake_background.dart';
 import 'settings_screen.dart';
 import 'write_screen.dart';
 
-/// A fresh start on every visit. No activity state is recorded.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 

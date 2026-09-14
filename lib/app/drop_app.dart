@@ -10,17 +10,10 @@ import '../services/sound_service.dart';
 import '../services/update_service.dart';
 import '../services/widget_launch_service.dart';
 
-/// Global key for showing snackbars from anywhere
 final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
     GlobalKey<ScaffoldMessengerState>();
 final GlobalKey<NavigatorState> appNavigatorKey = GlobalKey<NavigatorState>();
 
-/// DROP App - Premium Pro Max
-///
-/// One thought. Let it go.
-///
-/// A daily emotional release ritual - not a journal.
-/// No lists. No pressure. No productivity guilt.
 class DropApp extends StatefulWidget {
   final String? initialWidgetAction;
 
@@ -34,17 +27,14 @@ class _DropAppState extends State<DropApp> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
-    // Register lifecycle observer to pause/resume sounds
     WidgetsBinding.instance.addObserver(this);
     WidgetLaunchService.listen(_openWidgetAction);
 
-    // Lock to portrait mode
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
     ]);
 
-    // Set system UI to transparent for immersive feel
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -60,11 +50,9 @@ class _DropAppState extends State<DropApp> with WidgetsBindingObserver {
       );
     }
 
-    // Check for updates after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) => _checkForUpdates());
   }
 
-  /// Checks for app updates and shows appropriate snackbars
   Future<void> _checkForUpdates() async {
     await UpdateService.instance.checkForUpdate(
       onDownloading: () {
@@ -90,12 +78,11 @@ class _DropAppState extends State<DropApp> with WidgetsBindingObserver {
                 await UpdateService.instance.completeUpdate();
               },
             ),
-            duration: const Duration(days: 1), // Keep until user acts
+            duration: const Duration(days: 1),
           ),
         );
       },
       onError: (e) {
-        // Silent fail - update check errors shouldn't interrupt user
         debugPrint('Update check error: $e');
       },
     );
@@ -131,11 +118,9 @@ class _DropAppState extends State<DropApp> with WidgetsBindingObserver {
       case AppLifecycleState.inactive:
       case AppLifecycleState.detached:
       case AppLifecycleState.hidden:
-        // App is in background - pause all sounds
         soundService.pauseAmbient();
         break;
       case AppLifecycleState.resumed:
-        // App is in foreground - resume sounds
         soundService.resumeAmbient();
         break;
     }
@@ -172,7 +157,6 @@ class _DropAppState extends State<DropApp> with WidgetsBindingObserver {
           secondary: DropTheme.tealAccent,
           surface: DropTheme.gradientTop,
         ),
-        // Disable splash effects for calmer feel
         splashFactory: NoSplash.splashFactory,
         highlightColor: Colors.transparent,
       ),

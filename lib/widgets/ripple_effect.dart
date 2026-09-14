@@ -2,13 +2,11 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../config/theme.dart';
 
-/// Premium animated ripple circles expanding from center
-/// Creates organic, realistic water ripple effect
 class RippleEffect extends StatefulWidget {
   final double size;
   final bool animate;
   final int circleCount;
-  final bool expanding; // For splash screen expanding effect
+  final bool expanding;
 
   const RippleEffect({
     super.key,
@@ -80,25 +78,21 @@ class RipplePainter extends CustomPainter {
     final maxRadius = size.width / 2;
 
     for (int i = 0; i < circleCount; i++) {
-      // Each ripple has a phase offset for continuous flow
       final phaseOffset = i / circleCount;
       final animPhase = (animation + phaseOffset) % 1.0;
 
-      // Radius grows from 0 to max
       final radius = expanding
           ? maxRadius *
-                (0.3 + animPhase * 0.7) // Expanding from center
+                (0.3 + animPhase * 0.7)
           : maxRadius * (0.2 + (i + 1) / (circleCount + 1) * 0.6) +
                 (math.sin(animation * 2 * math.pi + i) * 4);
 
-      // Opacity fades as ripple expands
       final baseOpacity = expanding
           ? (1.0 - animPhase) * 0.4
           : 0.25 - (i * 0.04);
       final opacity =
           baseOpacity * (0.7 + 0.3 * math.sin(animation * 2 * math.pi + i));
 
-      // Varying stroke for organic feel
       final strokeWidth = 1.2 - (i * 0.15);
 
       final paint = Paint()
@@ -108,7 +102,6 @@ class RipplePainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = strokeWidth.clamp(0.5, 1.5);
 
-      // Add blur to outer ripples
       if (i > circleCount ~/ 2) {
         paint.maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
       }

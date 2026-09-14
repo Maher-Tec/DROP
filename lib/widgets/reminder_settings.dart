@@ -4,10 +4,6 @@ import '../config/theme.dart';
 import '../services/notification_service.dart';
 import '../services/theme_service.dart';
 
-/// REMINDER SETTINGS - Simple toggle with time picker
-///
-/// A minimal, calming settings widget for daily reminder configuration.
-/// Can be placed at bottom of home screen or in a settings modal.
 class ReminderSettings extends StatefulWidget {
   const ReminderSettings({super.key});
 
@@ -39,10 +35,8 @@ class _ReminderSettingsState extends State<ReminderSettings> {
 
   Future<void> _toggleReminder(bool value) async {
     if (value) {
-      // Request permission first
       final granted = await notificationService.requestPermissions();
       if (!granted) {
-        // Show message if permission denied
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -122,7 +116,6 @@ class _ReminderSettingsState extends State<ReminderSettings> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Header with toggle
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -151,7 +144,6 @@ class _ReminderSettingsState extends State<ReminderSettings> {
             ],
           ),
 
-          // Time selector (only visible when enabled)
           if (_enabled) ...[
             const SizedBox(height: 12),
             GestureDetector(

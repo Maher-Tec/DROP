@@ -6,27 +6,17 @@ import '../widgets/water_drop.dart';
 import '../widgets/ripple_effect.dart';
 import 'home_screen.dart';
 
-/// ONBOARDING SCREEN - First-time user experience
-///
-/// Beautiful 3-screen intro:
-/// 1. Welcome - "DROP"
-/// 2. Philosophy - "No judgment. No history. Just release."
-/// 3. Demo - Sample drop animation
-///
-/// Only shows on first launch.
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
 
-  /// Check if onboarding has been completed
   static Future<bool> isCompleted() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool('onboarding_completed') ?? false;
   }
 
-  /// Mark onboarding as completed
   static Future<void> markCompleted() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('onboarding_completed', true);
@@ -37,9 +27,8 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     with TickerProviderStateMixin {
   final PageController _pageController = PageController();
   int _currentPage = 0;
-  double _pageOffset = 0.0; // For parallax effect
+  double _pageOffset = 0.0;
 
-  // Demo animation controllers
   late AnimationController _demoDropController;
   late Animation<double> _demoDropFall;
   late Animation<double> _demoDropFade;
@@ -50,7 +39,6 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   void initState() {
     super.initState();
 
-    // Demo drop animation
     _demoDropController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
@@ -70,7 +58,6 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       duration: const Duration(milliseconds: 2000),
     );
 
-    // Listen to page scroll for parallax
     _pageController.addListener(_onPageScroll);
   }
 
@@ -91,17 +78,14 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   void _onPageChanged(int page) {
     setState(() => _currentPage = page);
 
-    // Haptic feedback on page change
     HapticService.softTap();
 
-    // Start demo animation on last page
     if (page == 2) {
       Future.delayed(const Duration(milliseconds: 500), _startDemoAnimation);
     }
   }
 
   void _startDemoAnimation() async {
-    // Guard against calling after dispose
     if (!mounted || _currentPage != 2) return;
 
     _demoDropController.forward();
@@ -112,7 +96,6 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     setState(() => _showDemoRipple = true);
     _demoRippleController.forward();
 
-    // Reset and loop
     await Future.delayed(const Duration(milliseconds: 2500));
     if (!mounted || _currentPage != 2) return;
 
@@ -159,7 +142,6 @@ class _OnboardingScreenState extends State<OnboardingScreen>
         child: SafeArea(
           child: Column(
             children: [
-              // Skip button (top right)
               Align(
                 alignment: Alignment.topRight,
                 child: Padding(
@@ -177,7 +159,6 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                 ),
               ),
 
-              // Main content
               Expanded(
                 child: PageView(
                   controller: _pageController,
@@ -190,7 +171,6 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                 ),
               ),
 
-              // Page indicator and continue button
               Padding(
                 padding: EdgeInsets.only(
                   left: 24,
@@ -199,7 +179,6 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                 ),
                 child: Column(
                   children: [
-                    // Page dots
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(3, (index) {
@@ -219,7 +198,6 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
                     const SizedBox(height: 32),
 
-                    // Continue button
                     GestureDetector(
                       onTap: _nextPage,
                       child: Container(
@@ -258,7 +236,6 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   }
 
   Widget _buildWelcomePage(Size size, double fontScale) {
-    // Parallax offset for this page (page 0)
     final parallaxOffset = MediaQuery.disableAnimationsOf(context)
         ? 0.0
         : (_pageOffset - 0) * size.width * 0.15;
@@ -266,7 +243,6 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        // Water drop - moves slower (background layer)
         Transform.translate(
           offset: Offset(parallaxOffset * 0.3, 0),
           child: WaterDrop(
@@ -279,7 +255,6 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
         SizedBox(height: DropTheme.spacing(context, 40)),
 
-        // Title - moves medium speed
         Transform.translate(
           offset: Offset(parallaxOffset * 0.5, 0),
           child: Text(
@@ -290,7 +265,6 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
         SizedBox(height: DropTheme.spacing(context, 16)),
 
-        // Tagline - moves faster (foreground layer)
         Transform.translate(
           offset: Offset(parallaxOffset * 0.7, 0),
           child: Text(
@@ -308,7 +282,6 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Philosophy statements
           _buildPhilosophyLine('No judgments.', fontScale),
           SizedBox(height: DropTheme.spacing(context, 24)),
           _buildPhilosophyLine('No history.', fontScale),
@@ -317,7 +290,6 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
           SizedBox(height: DropTheme.spacing(context, 60)),
 
-          // Explanation
           Text(
             'One thought at a time.\nWrite it. Drop it. Let it go.',
             textAlign: TextAlign.center,
@@ -349,7 +321,6 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     return Stack(
       alignment: Alignment.center,
       children: [
-        // Demo drop animation
         AnimatedBuilder(
           animation: _demoDropController,
           builder: (context, child) {
@@ -373,12 +344,8 @@ class _OnboardingScreenState extends State<OnboardingScreen>
           },
         ),
 
-        // Ripple effect on impact
         if (_showDemoRipple && !MediaQuery.disableAnimationsOf(context))
           Positioned(
-            // RippleEffect paints circles. Flattening the whole canvas gives
-            // the lake a side-view perspective and keeps the impact point on
-            // the droplet's vertical axis.
             top: impactY - 28,
             child: AnimatedBuilder(
               animation: _demoRippleController,
@@ -399,7 +366,6 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             ),
           ),
 
-        // Instructions
         Positioned(
           bottom: size.height * 0.15,
           child: Column(

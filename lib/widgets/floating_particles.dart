@@ -2,16 +2,12 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../config/theme.dart';
 
-/// FLOATING PARTICLES - Premium ambient effect
-///
-/// Creates a calm, dreamy atmosphere with slowly floating
-/// light particles (like dust in moonlight or underwater specs).
 class FloatingParticles extends StatefulWidget {
   final int particleCount;
   final Color particleColor;
   final double maxSize;
   final double minSize;
-  final bool showStars; // Enable starfield at night
+  final bool showStars;
 
   const FloatingParticles({
     super.key,
@@ -38,7 +34,7 @@ class _FloatingParticlesState extends State<FloatingParticles>
 
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 30), // Very slow movement
+      duration: const Duration(seconds: 30),
     )..repeat();
 
     _particles = List.generate(
@@ -75,13 +71,13 @@ class _FloatingParticlesState extends State<FloatingParticles>
 }
 
 class _Particle {
-  double x; // 0.0 - 1.0 normalized position
+  double x;
   double y;
   double size;
   double speed;
   double opacity;
-  double drift; // Horizontal drift direction
-  bool isStar; // For starfield mode
+  double drift;
+  bool isStar;
 
   _Particle({
     required this.x,
@@ -98,10 +94,10 @@ class _Particle {
       x: random.nextDouble(),
       y: random.nextDouble(),
       size: minSize + random.nextDouble() * (maxSize - minSize),
-      speed: 0.02 + random.nextDouble() * 0.05, // Very slow upward drift
+      speed: 0.02 + random.nextDouble() * 0.05,
       opacity: 0.1 + random.nextDouble() * 0.4,
-      drift: (random.nextDouble() - 0.5) * 0.02, // Subtle horizontal movement
-      isStar: random.nextDouble() > 0.7, // 30% chance to be a star
+      drift: (random.nextDouble() - 0.5) * 0.02,
+      isStar: random.nextDouble() > 0.7,
     );
   }
 }
@@ -122,14 +118,12 @@ class _ParticlesPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     for (final particle in particles) {
-      // Calculate animated position
       final animatedY = (particle.y - progress * particle.speed) % 1.0;
       final animatedX = (particle.x + progress * particle.drift) % 1.0;
 
       final x = animatedX * size.width;
       final y = animatedY * size.height;
 
-      // Pulsing opacity for twinkling effect
       final twinkle = (sin(progress * 2 * pi + particle.x * 10) + 1) / 2;
       final opacity = particle.opacity * (0.5 + twinkle * 0.5);
 
@@ -137,10 +131,8 @@ class _ParticlesPainter extends CustomPainter {
         ..color = particleColor.withValues(alpha: opacity.clamp(0.0, 1.0));
 
       if (showStars && particle.isStar) {
-        // Draw star shape
         _drawStar(canvas, Offset(x, y), particle.size * 1.5, paint);
       } else {
-        // Draw circular particle with soft edge
         paint.maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.0);
         canvas.drawCircle(Offset(x, y), particle.size, paint);
       }
@@ -148,7 +140,6 @@ class _ParticlesPainter extends CustomPainter {
   }
 
   void _drawStar(Canvas canvas, Offset center, double radius, Paint paint) {
-    // Simple 4-point star
     final path = Path();
     for (int i = 0; i < 4; i++) {
       final angle = (i * pi / 2) - pi / 4;
@@ -161,7 +152,6 @@ class _ParticlesPainter extends CustomPainter {
         path.lineTo(outerX, outerY);
       }
 
-      // Inner point
       final innerAngle = angle + pi / 4;
       final innerX = center.dx + cos(innerAngle) * radius * 0.3;
       final innerY = center.dy + sin(innerAngle) * radius * 0.3;

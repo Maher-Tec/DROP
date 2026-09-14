@@ -1,7 +1,5 @@
 import 'package:flutter/services.dart';
 
-/// Receives privacy-safe action names from the native Android home widget.
-/// No thought text or activity data crosses this channel.
 class WidgetLaunchService {
   static const MethodChannel _channel = MethodChannel(
     'com.maherahmed.drop/widget_launch',

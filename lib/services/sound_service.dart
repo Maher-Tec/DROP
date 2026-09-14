@@ -1,26 +1,16 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Sound Service - Manages all audio playback in DROP
-///
-/// Audio Flow:
-/// 1. relax.mp3 - Plays from app open until user clicks to write (loops)
-/// 2. let it go.mp3 - Plays while user is writing (loops)
-/// 3. water drop.mp3 - Plays on drop animation
-/// 4. Back to relax.mp3
 class SoundService {
-  // Simple asset paths - audioplayers adds 'assets/' prefix automatically
   static const String _relaxSound = 'sound/relax.mp3';
   static const String _letItGoSound = 'sound/let it go.mp3';
   static const String _waterDropSound = 'sound/water drop.mp3';
-  static const String _popSound = 'sound/pop.mp3'; // ASMR bubble pop
+  static const String _popSound = 'sound/pop.mp3';
   static const double _dropEffectVolume = 0.5;
 
-  // Volume control
   static const String _volumeKey = 'sound_volume';
-  double _volume = 0.5; // 0.0 to 1.0
+  double _volume = 0.5;
 
-  // Audio players
   final AudioPlayer _ambientPlayer = AudioPlayer();
   final AudioPlayer _effectPlayer = AudioPlayer();
 
@@ -32,19 +22,15 @@ class SoundService {
   bool get enabled => _enabled;
   String? _currentAmbient;
 
-  /// Get current volume level
   double get volume => _volume;
 
-  /// Initialize the sound service
   Future<void> init() async {
     if (_isInitialized) return;
 
-    // Load saved volume
     final prefs = await SharedPreferences.getInstance();
     _volume = prefs.getDouble(_volumeKey) ?? 0.5;
     _enabled = prefs.getBool('sound_enabled') ?? true;
 
-    // Set release mode for better performance
     await _ambientPlayer.setReleaseMode(ReleaseMode.loop);
     await _effectPlayer.setReleaseMode(ReleaseMode.release);
 
@@ -67,7 +53,6 @@ class SoundService {
     }
   }
 
-  /// Set volume level (0.0 to 1.0)
   Future<void> setVolume(double value) async {
     _volume = value.clamp(0.0, 1.0);
     await _ambientPlayer.setVolume(_volume);
@@ -75,12 +60,10 @@ class SoundService {
       await player.setVolume(_volume * 0.6);
     }
 
-    // Persist
     final prefs = await SharedPreferences.getInstance();
     await prefs.setDouble(_volumeKey, _volume);
   }
 
-  /// Play relaxing ambient sound (loops until stopped)
   Future<void> playRelax() async {
     await init();
     if (!_enabled || !_foreground) return;
@@ -88,7 +71,7 @@ class SoundService {
     final revision = _playbackRevision;
 
     await _ambientPlayer.stop();
-    await _ambientPlayer.setVolume(_volume); // Use saved volume
+    await _ambientPlayer.setVolume(_volume);
     if (!_canPlay(revision)) return;
     await _ambientPlayer.play(AssetSource(_relaxSound));
     if (!_canPlay(revision)) {
@@ -98,14 +81,13 @@ class SoundService {
     _currentAmbient = _relaxSound;
   }
 
-  /// Play relaxing ambient sound at LOW volume (for writing screen)
   Future<void> playRelaxLow() async {
     await init();
     if (!_enabled || !_foreground) return;
     final revision = _playbackRevision;
 
     await _ambientPlayer.stop();
-    await _ambientPlayer.setVolume(_volume * 0.3); // Very low volume for focus
+    await _ambientPlayer.setVolume(_volume * 0.3);
     if (!_canPlay(revision)) return;
     await _ambientPlayer.play(AssetSource(_relaxSound));
     if (!_canPlay(revision)) {
@@ -115,7 +97,6 @@ class SoundService {
     _currentAmbient = _relaxSound;
   }
 
-  /// Play "let it go" ambient sound while writing (loops)
   Future<void> playLetItGo() async {
     await init();
     if (!_enabled || !_foreground) return;
@@ -133,7 +114,6 @@ class SoundService {
     _currentAmbient = _letItGoSound;
   }
 
-  /// Play water drop sound effect (one-shot)
   Future<void> playWaterDrop() async {
     await init();
     if (!_foreground) return;
@@ -146,13 +126,11 @@ class SoundService {
   bool _canPlay(int revision) =>
       _enabled && _foreground && revision == _playbackRevision;
 
-  /// Stop all ambient sounds
   Future<void> stopAmbient() async {
     await _ambientPlayer.stop();
     _currentAmbient = null;
   }
 
-  /// Pause ambient sound
   Future<void> pauseAmbient() async {
     _foreground = false;
     _playbackRevision++;
@@ -163,7 +141,6 @@ class SoundService {
     }
   }
 
-  /// Resume ambient sound
   Future<void> resumeAmbient() async {
     _foreground = true;
     await init();
@@ -175,7 +152,6 @@ class SoundService {
     }
   }
 
-  /// Fade out ambient sound
   Future<void> fadeOutAmbient({
     Duration duration = const Duration(milliseconds: 500),
   }) async {
@@ -196,28 +172,19 @@ class SoundService {
     _currentAmbient = null;
   }
 
-  /// Play ASMR bubble pop sound (One-shot for overlapping)
   Future<void> playPop() async {
     await init();
     if (!_enabled || !_foreground) return;
-    // Create a one-shot player for immediate overlap
     final player = AudioPlayer();
     _popPlayers.add(player);
     await player.setVolume(_volume * 0.6);
     await player.play(AssetSource(_popSound));
 
-    // Auto-dispose after sound finishes (approx 1s)
     Future.delayed(const Duration(seconds: 1), () {
       if (_popPlayers.remove(player)) player.dispose();
     });
   }
 
-  /// Stops playback and releases the one-shot pop players.
-  ///
-  /// The ambient/effect players are intentionally kept alive: this service
-  /// is a process-lifetime singleton, and actually disposing its `final`
-  /// players would leave it silently unable to play again if the widget
-  /// tree that called this is ever rebuilt within the same engine.
   Future<void> dispose() async {
     await _ambientPlayer.stop();
     await _effectPlayer.stop();
@@ -229,5 +196,4 @@ class SoundService {
   }
 }
 
-/// Global singleton instance
 final soundService = SoundService();

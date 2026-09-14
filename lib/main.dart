@@ -7,9 +7,6 @@ import 'services/sound_service.dart';
 import 'services/theme_service.dart';
 import 'services/widget_launch_service.dart';
 
-/// Runs [action] and swallows any failure so one misbehaving initializer
-/// (a plugin, a locked prefs file, an OEM quirk) can never keep the app
-/// from reaching [runApp].
 Future<void> _tryInit(String name, Future<void> Function() action) async {
   try {
     await action();
@@ -23,13 +20,10 @@ void main() async {
 
   await _tryInit('privacy migration', removeLegacyDropHistory);
 
-  // Load the saved sound preference before any screen requests playback.
   await _tryInit('sound service', soundService.init);
 
-  // Initialize notification service for daily reminders
   await _tryInit('notification service', notificationService.init);
 
-  // Initialize theme service
   final themeService = ThemeService();
   await _tryInit('theme service', themeService.init);
 

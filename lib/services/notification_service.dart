@@ -4,13 +4,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz_data;
 
-/// NOTIFICATION SERVICE - Daily Reminder System
-///
-/// Features:
-/// - Schedule daily reminder at user's chosen time
-/// - Calming notification messages
-/// - Enable/disable reminders
-/// - Persist reminder settings
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
@@ -25,12 +18,8 @@ class NotificationService {
   static const String _hourKey = 'reminder_hour';
   static const String _minuteKey = 'reminder_minute';
 
-  // One weekly-repeating notification per weekday (Monday=1..Sunday=7), each
-  // with its own message, so the reminder actually rotates day to day
-  // instead of repeating whatever message happened to be picked once.
   static const int _notificationIdBase = 100;
 
-  // Calming reminder messages
   static const List<String> _reminderMessages = [
     "Take a moment to release something.",
     "Your safe space is waiting.",
@@ -41,19 +30,15 @@ class NotificationService {
     "Drop one thought today.",
   ];
 
-  /// Initialize the notification service
   Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
 
-    // Initialize timezone
     tz_data.initializeTimeZones();
 
-    // Android settings
     const androidSettings = AndroidInitializationSettings(
       '@mipmap/launcher_icon',
     );
 
-    // iOS settings
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
@@ -70,7 +55,6 @@ class NotificationService {
       onDidReceiveNotificationResponse: _onNotificationTap,
     );
 
-    // Re-schedule if reminder was enabled
     if (isReminderEnabled) {
       await scheduleReminder(
         TimeOfDay(hour: reminderHour, minute: reminderMinute),
@@ -79,24 +63,17 @@ class NotificationService {
   }
 
   void _onNotificationTap(NotificationResponse response) {
-    // App will be opened when notification is tapped
-    // No additional action needed - just opens the app
   }
 
-  /// Check if reminders are enabled
   bool get isReminderEnabled => _prefs?.getBool(_enabledKey) ?? false;
 
-  /// Get reminder hour (default: 20 = 8 PM)
   int get reminderHour => _prefs?.getInt(_hourKey) ?? 20;
 
-  /// Get reminder minute (default: 0)
   int get reminderMinute => _prefs?.getInt(_minuteKey) ?? 0;
 
-  /// Get reminder time as TimeOfDay
   TimeOfDay get reminderTime =>
       TimeOfDay(hour: reminderHour, minute: reminderMinute);
 
-  /// Request notification permissions (iOS)
   Future<bool> requestPermissions() async {
     final android = _notifications
         .resolvePlatformSpecificImplementation<
@@ -124,16 +101,9 @@ class NotificationService {
     return false;
   }
 
-  /// Schedule the daily reminder at the specified time.
-  ///
-  /// Schedules one notification per weekday, each repeating weekly with its
-  /// own message, so the reminder text actually rotates through the week
-  /// instead of a single message repeating forever.
   Future<void> scheduleReminder(TimeOfDay time) async {
-    // Cancel any existing reminder
     await cancelReminder();
 
-    // Save settings
     await _prefs?.setBool(_enabledKey, true);
     await _prefs?.setInt(_hourKey, time.hour);
     await _prefs?.setInt(_minuteKey, time.minute);
@@ -163,7 +133,6 @@ class NotificationService {
     final now = tz.TZDateTime.now(tz.local);
 
     for (var weekday = DateTime.monday; weekday <= DateTime.sunday; weekday++) {
-      // Next occurrence of this weekday at the chosen time.
       var scheduledDate = tz.TZDateTime(
         tz.local,
         now.year,
@@ -193,7 +162,6 @@ class NotificationService {
     }
   }
 
-  /// Cancel scheduled reminders
   Future<void> cancelReminder() async {
     await _prefs?.setBool(_enabledKey, false);
     for (var weekday = DateTime.monday; weekday <= DateTime.sunday; weekday++) {
@@ -201,7 +169,6 @@ class NotificationService {
     }
   }
 
-  /// Toggle reminder on/off
   Future<void> toggleReminder(bool enabled, {TimeOfDay? time}) async {
     if (enabled) {
       await scheduleReminder(time ?? reminderTime);
@@ -211,5 +178,4 @@ class NotificationService {
   }
 }
 
-/// Global singleton instance
 final notificationService = NotificationService();

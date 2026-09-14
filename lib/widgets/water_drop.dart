@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import '../config/theme.dart';
 
-/// Premium water droplet with realistic gradient and glow
-/// Used as the central visual element on splash screen
 class WaterDrop extends StatelessWidget {
   final double size;
   final bool showGlow;
@@ -25,7 +23,6 @@ class WaterDrop extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Outer soft glow - luminous blue
           if (showGlow)
             Container(
               width: size * 2,
@@ -51,7 +48,6 @@ class WaterDrop extends StatelessWidget {
               ),
             ),
 
-          // The droplet itself - premium gradient
           CustomPaint(
             size: Size(size, size * 1.35),
             painter: PremiumDropletPainter(),
@@ -62,14 +58,12 @@ class WaterDrop extends StatelessWidget {
   }
 }
 
-/// Custom painter for premium water drop shape with realistic shading
 class PremiumDropletPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final centerX = size.width / 2;
     final bottomY = size.height;
 
-    // Main drop gradient - deep blue to lighter blue
     final mainPaint = Paint()
       ..shader = LinearGradient(
         begin: Alignment.topLeft,
@@ -83,7 +77,6 @@ class PremiumDropletPainter extends CustomPainter {
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
       ..style = PaintingStyle.fill;
 
-    // Create smooth teardrop path
     final path = Path();
     path.moveTo(centerX, bottomY);
     path.quadraticBezierTo(-size.width * 0.1, size.height * 0.38, centerX, 0);
@@ -97,7 +90,6 @@ class PremiumDropletPainter extends CustomPainter {
 
     canvas.drawPath(path, mainPaint);
 
-    // Inner highlight - reflects light
     final highlightPaint = Paint()
       ..shader = RadialGradient(
         center: const Alignment(-0.3, -0.5),
@@ -109,7 +101,6 @@ class PremiumDropletPainter extends CustomPainter {
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height * 0.5))
       ..style = PaintingStyle.fill;
 
-    // Small highlight ellipse
     final highlightPath = Path();
     highlightPath.addOval(
       Rect.fromCenter(
@@ -120,7 +111,6 @@ class PremiumDropletPainter extends CustomPainter {
     );
     canvas.drawPath(highlightPath, highlightPaint);
 
-    // Tiny specular highlight
     final specularPaint = Paint()
       ..color = Colors.white.withValues(alpha: 0.7)
       ..style = PaintingStyle.fill;
