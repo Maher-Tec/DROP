@@ -1,5 +1,5 @@
 name: drop
-description: "A new Flutter project."
+description: "A private ritual for letting go, one thought at a time."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.0+1
+version: 1.1.1+9
 
 environment:
   sdk: ^3.10.3
@@ -38,26 +38,23 @@ dependencies:
   # Beautiful typography
   google_fonts: ^6.1.0
   
-  # State persistence for drop history
+  # Local preferences only; thoughts and activity are never stored
   shared_preferences: ^2.2.2
-  
+
+  # State management for theme
+  provider: ^6.1.1
+
   # Audio player for ambient sounds
   audioplayers: ^6.0.0
   
-  # Lottie animations
-  lottie: ^3.1.0
-  
-  # HTTP for OpenAI API calls
-  http: ^1.2.0
-  
-  # Haptic feedback
-  vibration: ^2.0.0
-  
   # Local notifications for daily reminders
   flutter_local_notifications: ^18.0.1
-  
+
   # Timezone support for scheduled notifications
   timezone: ^0.10.0
+
+  # In-app updates for Android
+  in_app_update: ^4.2.5
 
 dev_dependencies:
   flutter_test:
@@ -90,10 +87,9 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
-  # Sound and animation assets
+  # Sound and image assets
   assets:
     - assets/sound/
-    - assets/animation/
     - assets/images/logo.png
     - assets/images/app_icon.png
 

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../config/theme.dart';
 import '../services/notification_service.dart';
+import '../services/theme_service.dart';
 
 /// REMINDER SETTINGS - Simple toggle with time picker
-/// 
+///
 /// A minimal, calming settings widget for daily reminder configuration.
 /// Can be placed at bottom of home screen or in a settings modal.
 class ReminderSettings extends StatefulWidget {
@@ -55,28 +57,32 @@ class _ReminderSettingsState extends State<ReminderSettings> {
         return;
       }
     }
-    
+
     setState(() => _enabled = value);
     await notificationService.toggleReminder(value, time: _time);
   }
 
   Future<void> _selectTime() async {
+    final isDarkMode = context.read<ThemeService>().isDarkMode;
+    final accent = DropTheme.getAccentColor(isDarkMode);
+    final baseTheme = isDarkMode ? ThemeData.dark() : ThemeData.light();
     final picked = await showTimePicker(
       context: context,
       initialTime: _time,
       builder: (context, child) {
         return Theme(
-          data: ThemeData.dark().copyWith(
-            colorScheme: ColorScheme.dark(
-              primary: DropTheme.dropAccent,
-              surface: DropTheme.deepBlue,
+          data: baseTheme.copyWith(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: accent,
+              brightness: isDarkMode ? Brightness.dark : Brightness.light,
+              surface: isDarkMode ? DropTheme.deepBlue : Colors.white,
             ),
           ),
           child: child!,
         );
       },
     );
-    
+
     if (picked != null && picked != _time) {
       setState(() => _time = picked);
       if (_enabled) {
@@ -95,19 +101,22 @@ class _ReminderSettingsState extends State<ReminderSettings> {
   @override
   Widget build(BuildContext context) {
     final fontScale = DropTheme.fontScale(context);
-    
+    final isDarkMode = context.watch<ThemeService>().isDarkMode;
+    final text = DropTheme.getTextColor(isDarkMode);
+    final accent = DropTheme.getAccentColor(isDarkMode);
+
     if (_loading) {
       return const SizedBox.shrink();
     }
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
-        color: DropTheme.deepBlue.withValues(alpha: 0.3),
+        color: isDarkMode
+            ? DropTheme.deepBlue.withValues(alpha: 0.34)
+            : Colors.white.withValues(alpha: 0.62),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: DropTheme.softWhite.withValues(alpha: 0.08),
-        ),
+        border: Border.all(color: text.withValues(alpha: 0.12)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -121,7 +130,7 @@ class _ReminderSettingsState extends State<ReminderSettings> {
                 children: [
                   Icon(
                     Icons.notifications_none_rounded,
-                    color: DropTheme.softWhite.withValues(alpha: 0.6),
+                    color: accent.withValues(alpha: 0.82),
                     size: 20,
                   ),
                   const SizedBox(width: 10),
@@ -129,7 +138,7 @@ class _ReminderSettingsState extends State<ReminderSettings> {
                     'Daily Reminder',
                     style: DropTheme.bodyStyle.copyWith(
                       fontSize: 15 * fontScale,
-                      color: DropTheme.softWhite.withValues(alpha: 0.8),
+                      color: text.withValues(alpha: 0.90),
                     ),
                   ),
                 ],
@@ -137,22 +146,27 @@ class _ReminderSettingsState extends State<ReminderSettings> {
               Switch.adaptive(
                 value: _enabled,
                 onChanged: _toggleReminder,
-                activeTrackColor: DropTheme.dropAccent,
-                thumbColor: WidgetStatePropertyAll(DropTheme.softWhite),
+                activeTrackColor: accent,
               ),
             ],
           ),
-          
+
           // Time selector (only visible when enabled)
           if (_enabled) ...[
             const SizedBox(height: 12),
             GestureDetector(
               onTap: _selectTime,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
-                  color: DropTheme.deepBlue.withValues(alpha: 0.4),
+                  color: isDarkMode
+                      ? DropTheme.deepBlue.withValues(alpha: 0.48)
+                      : accent.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: text.withValues(alpha: 0.08)),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -161,7 +175,7 @@ class _ReminderSettingsState extends State<ReminderSettings> {
                       'Remind me at',
                       style: DropTheme.hintStyle.copyWith(
                         fontSize: 13 * fontScale,
-                        color: DropTheme.softWhite.withValues(alpha: 0.5),
+                        color: text.withValues(alpha: 0.62),
                       ),
                     ),
                     Row(
@@ -170,13 +184,13 @@ class _ReminderSettingsState extends State<ReminderSettings> {
                           _formatTime(_time),
                           style: DropTheme.bodyStyle.copyWith(
                             fontSize: 15 * fontScale,
-                            color: DropTheme.dropAccent,
+                            color: accent,
                           ),
                         ),
                         const SizedBox(width: 8),
                         Icon(
                           Icons.schedule_rounded,
-                          color: DropTheme.dropAccent.withValues(alpha: 0.7),
+                          color: accent.withValues(alpha: 0.82),
                           size: 18,
                         ),
                       ],

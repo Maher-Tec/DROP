@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../config/theme.dart';
 import '../services/haptic_service.dart';
+import '../services/theme_service.dart';
 
 /// BREATHING GUIDE - Pre-Write Calming Exercise
-/// 
+///
 /// A simple 3-breath exercise to calm the user before writing.
-/// 
+///
 /// Features:
 /// - Expanding/contracting circle animation
 /// - "Breathe in..." / "Breathe out..." text
@@ -14,12 +16,8 @@ import '../services/haptic_service.dart';
 class BreathingGuide extends StatefulWidget {
   final VoidCallback onComplete;
   final VoidCallback? onSkip;
-  
-  const BreathingGuide({
-    super.key,
-    required this.onComplete,
-    this.onSkip,
-  });
+
+  const BreathingGuide({super.key, required this.onComplete, this.onSkip});
 
   @override
   State<BreathingGuide> createState() => _BreathingGuideState();
@@ -29,7 +27,7 @@ class _BreathingGuideState extends State<BreathingGuide>
     with TickerProviderStateMixin {
   late AnimationController _breathController;
   late Animation<double> _breathAnimation;
-  
+
   int _currentBreath = 1;
   bool _isBreathingIn = true;
   static const int _totalBreaths = 3;
@@ -37,17 +35,17 @@ class _BreathingGuideState extends State<BreathingGuide>
   @override
   void initState() {
     super.initState();
-    
+
     // Single breath cycle: 4 seconds in, 4 seconds out
     _breathController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 4),
     );
-    
+
     _breathAnimation = Tween<double>(begin: 0.6, end: 1.0).animate(
       CurvedAnimation(parent: _breathController, curve: Curves.easeInOut),
     );
-    
+
     // Start breathing
     _startBreathing();
   }
@@ -55,7 +53,7 @@ class _BreathingGuideState extends State<BreathingGuide>
   void _startBreathing() async {
     for (int i = 0; i < _totalBreaths; i++) {
       if (!mounted) return;
-      
+
       // Breathe in
       setState(() {
         _currentBreath = i + 1;
@@ -63,19 +61,19 @@ class _BreathingGuideState extends State<BreathingGuide>
       });
       HapticService.gentleTap();
       await _breathController.forward();
-      
+
       if (!mounted) return;
-      
+
       // Breathe out
       setState(() => _isBreathingIn = false);
       HapticService.gentleTap();
       await _breathController.reverse();
     }
-    
+
     // Complete
     if (mounted) {
       await Future.delayed(const Duration(milliseconds: 500));
-      widget.onComplete();
+      if (mounted) widget.onComplete();
     }
   }
 
@@ -90,36 +88,40 @@ class _BreathingGuideState extends State<BreathingGuide>
     final size = MediaQuery.of(context).size;
     final fontScale = DropTheme.fontScale(context);
     final circleBaseSize = size.width * 0.4;
-    
+    final themeService = context.watch<ThemeService>();
+    final isDarkMode = themeService.isDarkMode;
+
     return Container(
       width: double.infinity,
       height: double.infinity,
       decoration: BoxDecoration(
-        gradient: DropTheme.timeAwareGradient,
+        gradient: DropTheme.getBackgroundGradient(isDarkMode),
       ),
       child: SafeArea(
         child: Stack(
           alignment: Alignment.center,
           children: [
-            // Skip button (top right)
+            // Skip button (top left)
             Positioned(
               top: 16,
-              right: 16,
+              left: 16,
               child: GestureDetector(
                 onTap: widget.onSkip ?? widget.onComplete,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
                   child: Text(
-                    'skip',
-                    style: DropTheme.hintStyle.copyWith(
-                      fontSize: 14 * fontScale,
-                      color: DropTheme.softWhite.withValues(alpha: 0.35),
-                    ),
+                    'Done',
+                    style: DropTheme.getHintStyle(
+                      isDarkMode,
+                    ).copyWith(fontSize: 14 * fontScale),
                   ),
                 ),
               ),
             ),
-            
+
             // Main content
             Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -127,30 +129,45 @@ class _BreathingGuideState extends State<BreathingGuide>
                 // Breath counter
                 Text(
                   'Breath $_currentBreath of $_totalBreaths',
-                  style: DropTheme.hintStyle.copyWith(
-                    fontSize: 12 * fontScale,
-                    color: DropTheme.softWhite.withValues(alpha: 0.4),
-                  ),
+                  style: DropTheme.getHintStyle(
+                    isDarkMode,
+                  ).copyWith(fontSize: 12 * fontScale),
                 ),
-                
+
                 SizedBox(height: size.height * 0.08),
-                
+
                 // Breathing circle
                 AnimatedBuilder(
                   animation: _breathAnimation,
                   builder: (context, child) {
                     return Container(
-                      width: circleBaseSize * _breathAnimation.value,
-                      height: circleBaseSize * _breathAnimation.value,
+                      width:
+                          circleBaseSize *
+                          (MediaQuery.disableAnimationsOf(context)
+                              ? 0.8
+                              : _breathAnimation.value),
+                      height:
+                          circleBaseSize *
+                          (MediaQuery.disableAnimationsOf(context)
+                              ? 0.8
+                              : _breathAnimation.value),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         gradient: RadialGradient(
                           colors: [
                             DropTheme.dropAccent.withValues(
-                              alpha: 0.3 * _breathAnimation.value,
+                              alpha:
+                                  0.3 *
+                                  (MediaQuery.disableAnimationsOf(context)
+                                      ? 0.8
+                                      : _breathAnimation.value),
                             ),
                             DropTheme.glowColor.withValues(
-                              alpha: 0.15 * _breathAnimation.value,
+                              alpha:
+                                  0.15 *
+                                  (MediaQuery.disableAnimationsOf(context)
+                                      ? 0.8
+                                      : _breathAnimation.value),
                             ),
                             Colors.transparent,
                           ],
@@ -158,14 +175,22 @@ class _BreathingGuideState extends State<BreathingGuide>
                         ),
                         border: Border.all(
                           color: DropTheme.dropAccent.withValues(
-                            alpha: 0.4 * _breathAnimation.value,
+                            alpha:
+                                0.4 *
+                                (MediaQuery.disableAnimationsOf(context)
+                                    ? 0.8
+                                    : _breathAnimation.value),
                           ),
                           width: 2,
                         ),
                         boxShadow: [
                           BoxShadow(
                             color: DropTheme.glowColor.withValues(
-                              alpha: 0.2 * _breathAnimation.value,
+                              alpha:
+                                  0.2 *
+                                  (MediaQuery.disableAnimationsOf(context)
+                                      ? 0.8
+                                      : _breathAnimation.value),
                             ),
                             blurRadius: 40,
                             spreadRadius: 10,
@@ -175,19 +200,18 @@ class _BreathingGuideState extends State<BreathingGuide>
                     );
                   },
                 ),
-                
+
                 SizedBox(height: size.height * 0.08),
-                
+
                 // Instruction text
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 300),
                   child: Text(
                     _isBreathingIn ? 'Breathe in...' : 'Breathe out...',
                     key: ValueKey(_isBreathingIn),
-                    style: DropTheme.bodyStyle.copyWith(
-                      fontSize: 22 * fontScale,
-                      color: DropTheme.softWhite.withValues(alpha: 0.8),
-                    ),
+                    style: DropTheme.getBodyStyle(
+                      isDarkMode,
+                    ).copyWith(fontSize: 22 * fontScale),
                   ),
                 ),
               ],

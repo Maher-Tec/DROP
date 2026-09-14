@@ -8,7 +8,7 @@ class WaterDrop extends StatelessWidget {
   final bool showGlow;
   final double glowOpacity;
   final double glowBlur;
-  
+
   const WaterDrop({
     super.key,
     this.size = 50,
@@ -34,19 +34,23 @@ class WaterDrop extends StatelessWidget {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: DropTheme.glowColor.withValues(alpha: glowOpacity * 0.25),
+                    color: DropTheme.glowColor.withValues(
+                      alpha: glowOpacity * 0.25,
+                    ),
                     blurRadius: glowBlur * 1.8,
                     spreadRadius: glowBlur * 0.6,
                   ),
                   BoxShadow(
-                    color: DropTheme.dropAccent.withValues(alpha: glowOpacity * 0.15),
+                    color: DropTheme.dropAccent.withValues(
+                      alpha: glowOpacity * 0.15,
+                    ),
                     blurRadius: glowBlur * 2.5,
                     spreadRadius: glowBlur * 1.2,
                   ),
                 ],
               ),
             ),
-          
+
           // The droplet itself - premium gradient
           CustomPaint(
             size: Size(size, size * 1.35),
@@ -64,7 +68,7 @@ class PremiumDropletPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final centerX = size.width / 2;
     final bottomY = size.height;
-    
+
     // Main drop gradient - deep blue to lighter blue
     final mainPaint = Paint()
       ..shader = LinearGradient(
@@ -78,16 +82,11 @@ class PremiumDropletPainter extends CustomPainter {
         stops: const [0.0, 0.4, 1.0],
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
       ..style = PaintingStyle.fill;
-    
+
     // Create smooth teardrop path
     final path = Path();
     path.moveTo(centerX, bottomY);
-    path.quadraticBezierTo(
-      -size.width * 0.1,
-      size.height * 0.38,
-      centerX,
-      0,
-    );
+    path.quadraticBezierTo(-size.width * 0.1, size.height * 0.38, centerX, 0);
     path.quadraticBezierTo(
       size.width * 1.1,
       size.height * 0.38,
@@ -95,9 +94,9 @@ class PremiumDropletPainter extends CustomPainter {
       bottomY,
     );
     path.close();
-    
+
     canvas.drawPath(path, mainPaint);
-    
+
     // Inner highlight - reflects light
     final highlightPaint = Paint()
       ..shader = RadialGradient(
@@ -109,7 +108,7 @@ class PremiumDropletPainter extends CustomPainter {
         ],
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height * 0.5))
       ..style = PaintingStyle.fill;
-    
+
     // Small highlight ellipse
     final highlightPath = Path();
     highlightPath.addOval(
@@ -120,12 +119,12 @@ class PremiumDropletPainter extends CustomPainter {
       ),
     );
     canvas.drawPath(highlightPath, highlightPaint);
-    
+
     // Tiny specular highlight
     final specularPaint = Paint()
       ..color = Colors.white.withValues(alpha: 0.7)
       ..style = PaintingStyle.fill;
-    
+
     canvas.drawOval(
       Rect.fromCenter(
         center: Offset(centerX - size.width * 0.18, size.height * 0.18),

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
 import '../config/theme.dart';
 import '../services/sound_service.dart';
+import '../services/theme_service.dart';
 import '../widgets/lake_background.dart';
 import '../widgets/reminder_settings.dart';
-import 'history_screen.dart';
 
 /// SETTINGS SCREEN - Premium Pro Max
-/// 
+///
 /// Features:
 /// - Daily reminder toggle with time picker
 /// - Sound on/off toggle
@@ -22,55 +22,22 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  bool _soundEnabled = true;
-  bool _nightModeOverride = false;
-  bool _reducedMotion = false;
-  bool _loading = true;
-  
-  SharedPreferences? _prefs;
-  
-  static const String _soundKey = 'sound_enabled';
-  static const String _nightModeKey = 'night_mode_override';
-  static const String _reducedMotionKey = 'reduced_motion';
-
-  @override
-  void initState() {
-    super.initState();
-    _loadSettings();
-  }
-
-  Future<void> _loadSettings() async {
-    _prefs = await SharedPreferences.getInstance();
-    if (mounted) {
-      setState(() {
-        _soundEnabled = _prefs?.getBool(_soundKey) ?? true;
-        _nightModeOverride = _prefs?.getBool(_nightModeKey) ?? false;
-        _reducedMotion = _prefs?.getBool(_reducedMotionKey) ?? false;
-        _loading = false;
-      });
-    }
-  }
+  // Sound isn't exposed as a ChangeNotifier, so it's the one setting this
+  // screen still mirrors locally. It's already loaded by main() before any
+  // screen can be reached, so no loading state is needed here.
+  late bool _soundEnabled = soundService.enabled;
 
   Future<void> _toggleSound(bool value) async {
     setState(() => _soundEnabled = value);
-    await _prefs?.setBool(_soundKey, value);
-    
-    if (value) {
-      soundService.playRelax();
-    } else {
-      soundService.stopAmbient();
-    }
+    await soundService.setEnabled(value);
   }
 
   Future<void> _toggleNightMode(bool value) async {
-    setState(() => _nightModeOverride = value);
-    await _prefs?.setBool(_nightModeKey, value);
-    // Theme will pick this up on next build
+    await context.read<ThemeService>().setNightMode(value);
   }
 
   Future<void> _toggleReducedMotion(bool value) async {
-    setState(() => _reducedMotion = value);
-    await _prefs?.setBool(_reducedMotionKey, value);
+    await context.read<ThemeService>().setReducedMotion(value);
   }
 
   void _close() {
@@ -80,132 +47,130 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final fontScale = DropTheme.fontScale(context);
-    
+    final themeService = context.watch<ThemeService>();
+    final isDarkMode = themeService.isDarkMode;
+    final nightModeOverride = themeService.nightModeOverride;
+    final reducedMotion = themeService.reducedMotion;
+
     return Scaffold(
       body: LakeBackground(
-        animate: !_reducedMotion,
+        animate: !reducedMotion,
         showWaves: false,
-        showReflections: true,
-        showParticles: !_reducedMotion,
-        showMoonlight: true,
+        showReflections: false,
+        showParticles: false,
+        showMoonlight: false,
         child: SafeArea(
-          child: _loading
-              ? const Center(child: CircularProgressIndicator())
-              : Column(
-                  children: [
-                    // Top bar
-                    _buildTopBar(fontScale),
-                    
-                    // Settings content
-                    Expanded(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildSectionTitle('Reminders', fontScale),
-                            const SizedBox(height: 12),
-                            const ReminderSettings(),
-                            
-                            const SizedBox(height: 32),
-                            
-                            _buildSectionTitle('Sound & Haptics', fontScale),
-                            const SizedBox(height: 12),
-                            _buildSettingTile(
-                              icon: Icons.volume_up_rounded,
-                              title: 'Ambient Sound',
-                              subtitle: 'Relaxing background music',
-                              value: _soundEnabled,
-                              onChanged: _toggleSound,
-                              fontScale: fontScale,
-                            ),
-                            
-                            // Volume slider (only visible when sound enabled)
-                            if (_soundEnabled)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 12),
-                                child: _buildVolumeSlider(fontScale),
-                              ),
-                            
-                            const SizedBox(height: 32),
-                            
-                            _buildSectionTitle('Appearance', fontScale),
-                            const SizedBox(height: 12),
-                            _buildSettingTile(
-                              icon: Icons.dark_mode_rounded,
-                              title: 'Always Night Mode',
-                              subtitle: 'Override automatic time-based theme',
-                              value: _nightModeOverride,
-                              onChanged: _toggleNightMode,
-                              fontScale: fontScale,
-                            ),
-                            const SizedBox(height: 12),
-                            _buildSettingTile(
-                              icon: Icons.accessibility_new_rounded,
-                              title: 'Reduced Motion',
-                              subtitle: 'Minimize animations',
-                              value: _reducedMotion,
-                              onChanged: _toggleReducedMotion,
-                              fontScale: fontScale,
-                            ),
-                            
-                            const SizedBox(height: 32),
-                            
-                            _buildSectionTitle('Your Journey', fontScale),
-                            const SizedBox(height: 12),
-                            _buildTappableTile(
-                              icon: Icons.calendar_month_rounded,
-                              title: 'History & Stats',
-                              subtitle: 'View your drop calendar and streaks',
-                              fontScale: fontScale,
-                              onTap: () {
-                                Navigator.of(context).push(
-                                  PageRouteBuilder(
-                                    pageBuilder: (context, animation, _) => const HistoryScreen(),
-                                    transitionsBuilder: (context, animation, _, child) {
-                                      return FadeTransition(opacity: animation, child: child);
-                                    },
-                                  ),
-                                );
-                              },
-                            ),
-                            
-                            const SizedBox(height: 32),
-                            
-                            _buildSectionTitle('About', fontScale),
-                            const SizedBox(height: 12),
-                            _buildInfoTile(
-                              icon: Icons.water_drop_rounded,
-                              title: 'DROP',
-                              subtitle: 'Version 1.0.0',
-                              fontScale: fontScale,
-                            ),
-                            const SizedBox(height: 8),
-                            _buildInfoTile(
-                              icon: Icons.lock_outline_rounded,
-                              title: 'Privacy',
-                              subtitle: 'Your thoughts are never saved or shared',
-                              fontScale: fontScale,
-                            ),
-                            const SizedBox(height: 8),
-                            _buildInfoTile(
-                              icon: Icons.favorite_border_rounded,
-                              title: 'Made with love',
-                              subtitle: 'For your peace of mind',
-                              fontScale: fontScale,
-                            ),
-                          ],
-                        ),
+          child: Column(
+            children: [
+              // Top bar
+              _buildTopBar(fontScale, isDarkMode),
+
+              // Settings content
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSectionTitle('Reminders', fontScale, isDarkMode),
+                      const SizedBox(height: 12),
+                      const ReminderSettings(),
+
+                      const SizedBox(height: 32),
+
+                      _buildSectionTitle(
+                        'Sound & Haptics',
+                        fontScale,
+                        isDarkMode,
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 12),
+                      _buildSettingTile(
+                        icon: Icons.volume_up_rounded,
+                        title: 'Music',
+                        subtitle: 'Background music; the drop sound always plays',
+                        value: _soundEnabled,
+                        onChanged: _toggleSound,
+                        fontScale: fontScale,
+                        isDarkMode: isDarkMode,
+                      ),
+
+                      // Volume slider (only visible when sound enabled)
+                      if (_soundEnabled)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 12),
+                          child: _buildVolumeSlider(fontScale, isDarkMode),
+                        ),
+
+                      const SizedBox(height: 32),
+
+                      _buildSectionTitle('Appearance', fontScale, isDarkMode),
+                      const SizedBox(height: 12),
+
+                      // PREMIUM THEME TOGGLE
+                      _buildThemeToggle(fontScale),
+
+                      const SizedBox(height: 12),
+                      _buildSettingTile(
+                        icon: Icons.dark_mode_rounded,
+                        title: 'Always Night Mode',
+                        subtitle: 'Override automatic time-based theme',
+                        value: nightModeOverride,
+                        onChanged: _toggleNightMode,
+                        fontScale: fontScale,
+                        isDarkMode: isDarkMode,
+                      ),
+                      const SizedBox(height: 12),
+                      _buildSettingTile(
+                        icon: Icons.accessibility_new_rounded,
+                        title: 'Reduced Motion',
+                        subtitle: 'Minimize animations',
+                        value: reducedMotion,
+                        onChanged: _toggleReducedMotion,
+                        fontScale: fontScale,
+                        isDarkMode: isDarkMode,
+                      ),
+
+                      const SizedBox(height: 32),
+
+                      _buildSectionTitle('About', fontScale, isDarkMode),
+                      const SizedBox(height: 12),
+                      _buildInfoTile(
+                        icon: Icons.water_drop_rounded,
+                        title: 'DROP',
+                        subtitle: 'One thought at a time.',
+                        fontScale: fontScale,
+                        isDarkMode: isDarkMode,
+                      ),
+                      const SizedBox(height: 8),
+                      _buildInfoTile(
+                        icon: Icons.lock_outline_rounded,
+                        title: 'Privacy',
+                        subtitle:
+                            "Your words aren't saved or sent by DROP. No activity history is kept. Only preferences and whether you've seen the introduction stay on this device. Your keyboard operates separately.",
+                        fontScale: fontScale,
+                        isDarkMode: isDarkMode,
+                      ),
+                      const SizedBox(height: 8),
+                      _buildInfoTile(
+                        icon: Icons.favorite_border_rounded,
+                        title: 'Made with love',
+                        subtitle: 'For your peace of mind',
+                        fontScale: fontScale,
+                        isDarkMode: isDarkMode,
+                      ),
+                    ],
+                  ),
                 ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildTopBar(double fontScale) {
+  Widget _buildTopBar(double fontScale, bool isDarkMode) {
+    final textColor = DropTheme.getTextColor(isDarkMode);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
       child: Row(
@@ -221,31 +186,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   Icon(
                     Icons.chevron_left_rounded,
-                    color: DropTheme.softWhite.withValues(alpha: 0.35),
+                    color: textColor.withValues(alpha: 0.5),
                     size: 26,
                   ),
                   const SizedBox(width: 2),
                   Text(
                     'back',
-                    style: DropTheme.hintStyle.copyWith(
-                      fontSize: 13 * fontScale,
-                      color: DropTheme.softWhite.withValues(alpha: 0.3),
-                    ),
+                    style: DropTheme.getHintStyle(
+                      isDarkMode,
+                    ).copyWith(fontSize: 13 * fontScale),
                   ),
                 ],
               ),
             ),
           ),
-          
+
           // Title
           Text(
             'Settings',
-            style: DropTheme.bodyStyle.copyWith(
-              fontSize: 17 * fontScale,
-              color: DropTheme.softWhite.withValues(alpha: 0.8),
-            ),
+            style: DropTheme.getBodyStyle(
+              isDarkMode,
+            ).copyWith(fontSize: 17 * fontScale),
           ),
-          
+
           // Spacer for balance
           const SizedBox(width: 80),
         ],
@@ -253,33 +216,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildSectionTitle(String title, double fontScale) {
+  Widget _buildSectionTitle(String title, double fontScale, bool isDarkMode) {
     return Text(
       title.toUpperCase(),
-      style: DropTheme.hintStyle.copyWith(
+      style: DropTheme.getHintStyle(isDarkMode).copyWith(
         fontSize: 11 * fontScale,
-        color: DropTheme.dropAccent.withValues(alpha: 0.6),
+        color: DropTheme.getAccentColor(isDarkMode).withValues(alpha: 0.7),
         letterSpacing: 1.5,
         fontWeight: FontWeight.w600,
       ),
     );
   }
 
-  Widget _buildVolumeSlider(double fontScale) {
+  Widget _buildVolumeSlider(double fontScale, bool isDarkMode) {
+    final text = DropTheme.getTextColor(isDarkMode);
+    final accent = DropTheme.getAccentColor(isDarkMode);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: DropTheme.deepBlue.withValues(alpha: 0.2),
+        color: isDarkMode
+            ? DropTheme.deepBlue.withValues(alpha: 0.34)
+            : Colors.white.withValues(alpha: 0.58),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: DropTheme.softWhite.withValues(alpha: 0.05),
-        ),
+        border: Border.all(color: text.withValues(alpha: 0.12)),
       ),
       child: Row(
         children: [
           Icon(
             Icons.volume_down_rounded,
-            color: DropTheme.softWhite.withValues(alpha: 0.4),
+            color: text.withValues(alpha: 0.58),
             size: 20,
           ),
           Expanded(
@@ -287,8 +252,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               value: soundService.volume,
               min: 0.0,
               max: 1.0,
-              activeColor: DropTheme.dropAccent,
-              inactiveColor: DropTheme.softWhite.withValues(alpha: 0.15),
+              activeColor: accent,
+              inactiveColor: text.withValues(alpha: 0.16),
               onChanged: (value) async {
                 await soundService.setVolume(value);
                 setState(() {});
@@ -297,69 +262,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           Icon(
             Icons.volume_up_rounded,
-            color: DropTheme.softWhite.withValues(alpha: 0.4),
+            color: text.withValues(alpha: 0.58),
             size: 20,
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildTappableTile({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required double fontScale,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: DropTheme.deepBlue.withValues(alpha: 0.3),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: DropTheme.softWhite.withValues(alpha: 0.08),
-          ),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              color: DropTheme.dropAccent.withValues(alpha: 0.6),
-              size: 22,
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: DropTheme.bodyStyle.copyWith(
-                      fontSize: 15 * fontScale,
-                      color: DropTheme.softWhite.withValues(alpha: 0.85),
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: DropTheme.hintStyle.copyWith(
-                      fontSize: 12 * fontScale,
-                      color: DropTheme.softWhite.withValues(alpha: 0.4),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              Icons.chevron_right_rounded,
-              color: DropTheme.softWhite.withValues(alpha: 0.3),
-              size: 22,
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -371,23 +277,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required bool value,
     required Function(bool) onChanged,
     required double fontScale,
+    required bool isDarkMode,
   }) {
+    final text = DropTheme.getTextColor(isDarkMode);
+    final accent = DropTheme.getAccentColor(isDarkMode);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: DropTheme.deepBlue.withValues(alpha: 0.3),
+        color: isDarkMode
+            ? DropTheme.deepBlue.withValues(alpha: 0.34)
+            : Colors.white.withValues(alpha: 0.62),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: DropTheme.softWhite.withValues(alpha: 0.08),
-        ),
+        border: Border.all(color: text.withValues(alpha: 0.12)),
       ),
       child: Row(
         children: [
-          Icon(
-            icon,
-            color: DropTheme.softWhite.withValues(alpha: 0.5),
-            size: 22,
-          ),
+          Icon(icon, color: accent.withValues(alpha: 0.82), size: 22),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
@@ -397,7 +302,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   title,
                   style: DropTheme.bodyStyle.copyWith(
                     fontSize: 15 * fontScale,
-                    color: DropTheme.softWhite.withValues(alpha: 0.85),
+                    color: text.withValues(alpha: 0.90),
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -405,7 +310,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   subtitle,
                   style: DropTheme.hintStyle.copyWith(
                     fontSize: 12 * fontScale,
-                    color: DropTheme.softWhite.withValues(alpha: 0.4),
+                    color: text.withValues(alpha: 0.62),
                   ),
                 ),
               ],
@@ -414,8 +319,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Switch.adaptive(
             value: value,
             onChanged: onChanged,
-            activeTrackColor: DropTheme.dropAccent,
-            thumbColor: WidgetStatePropertyAll(DropTheme.softWhite),
+            activeTrackColor: accent,
           ),
         ],
       ),
@@ -427,23 +331,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required String title,
     required String subtitle,
     required double fontScale,
+    required bool isDarkMode,
   }) {
+    final text = DropTheme.getTextColor(isDarkMode);
+    final accent = DropTheme.getAccentColor(isDarkMode);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: DropTheme.deepBlue.withValues(alpha: 0.2),
+        color: isDarkMode
+            ? DropTheme.deepBlue.withValues(alpha: 0.28)
+            : Colors.white.withValues(alpha: 0.48),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: DropTheme.softWhite.withValues(alpha: 0.05),
-        ),
+        border: Border.all(color: text.withValues(alpha: 0.10)),
       ),
       child: Row(
         children: [
-          Icon(
-            icon,
-            color: DropTheme.dropAccent.withValues(alpha: 0.5),
-            size: 20,
-          ),
+          Icon(icon, color: accent.withValues(alpha: 0.72), size: 20),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
@@ -453,7 +356,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   title,
                   style: DropTheme.bodyStyle.copyWith(
                     fontSize: 14 * fontScale,
-                    color: DropTheme.softWhite.withValues(alpha: 0.7),
+                    color: text.withValues(alpha: 0.84),
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -461,7 +364,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   subtitle,
                   style: DropTheme.hintStyle.copyWith(
                     fontSize: 11 * fontScale,
-                    color: DropTheme.softWhite.withValues(alpha: 0.35),
+                    color: text.withValues(alpha: 0.60),
                   ),
                 ),
               ],
@@ -469,6 +372,122 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  /// PREMIUM THEME TOGGLE - Sun/Moon with smooth animation
+  Widget _buildThemeToggle(double fontScale) {
+    return Consumer<ThemeService>(
+      builder: (context, themeService, _) {
+        final isDark = themeService.isDarkMode;
+
+        return GestureDetector(
+          onTap: () async {
+            await themeService.toggleTheme();
+            if (mounted) setState(() {});
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: isDark
+                    ? [
+                        DropTheme.deepBlue.withValues(alpha: 0.4),
+                        DropTheme.oceanBlue.withValues(alpha: 0.3),
+                      ]
+                    : [
+                        DropTheme.lightDropAccent.withValues(alpha: 0.15),
+                        DropTheme.lightGlow.withValues(alpha: 0.1),
+                      ],
+              ),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isDark
+                    ? DropTheme.softWhite.withValues(alpha: 0.1)
+                    : DropTheme.lightDropAccent.withValues(alpha: 0.2),
+                width: 1.5,
+              ),
+            ),
+            child: Row(
+              children: [
+                // Icon - Animated between sun and moon
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 400),
+                  transitionBuilder: (child, animation) {
+                    return RotationTransition(
+                      turns: animation,
+                      child: FadeTransition(opacity: animation, child: child),
+                    );
+                  },
+                  child: Icon(
+                    isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+                    key: ValueKey(isDark),
+                    color: isDark
+                        ? DropTheme.dropAccent.withValues(alpha: 0.7)
+                        : DropTheme.lightDropAccent.withValues(alpha: 0.8),
+                    size: 26,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Theme',
+                        style: DropTheme.bodyStyle.copyWith(
+                          fontSize: 16 * fontScale,
+                          fontWeight: FontWeight.w500,
+                          color: isDark
+                              ? DropTheme.softWhite.withValues(alpha: 0.9)
+                              : DropTheme.darkTealText.withValues(alpha: 0.9),
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 300),
+                        child: Text(
+                          isDark ? 'Dark ocean mode' : 'Light water mode',
+                          key: ValueKey(isDark),
+                          style: DropTheme.hintStyle.copyWith(
+                            fontSize: 12 * fontScale,
+                            color: isDark
+                                ? DropTheme.softWhite.withValues(alpha: 0.45)
+                                : DropTheme.darkTealText.withValues(alpha: 0.5),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Toggle indicator
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? DropTheme.dropAccent.withValues(alpha: 0.2)
+                        : DropTheme.lightDropAccent.withValues(alpha: 0.25),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    isDark ? 'Dark' : 'Light',
+                    style: DropTheme.hintStyle.copyWith(
+                      fontSize: 12 * fontScale,
+                      fontWeight: FontWeight.w600,
+                      color: isDark
+                          ? DropTheme.dropAccent
+                          : DropTheme.lightDropAccent,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

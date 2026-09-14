@@ -7,25 +7,25 @@ import '../widgets/ripple_effect.dart';
 import 'home_screen.dart';
 
 /// ONBOARDING SCREEN - First-time user experience
-/// 
+///
 /// Beautiful 3-screen intro:
 /// 1. Welcome - "DROP"
-/// 2. Philosophy - "No judgments. No storage. Just release."
+/// 2. Philosophy - "No judgment. No history. Just release."
 /// 3. Demo - Sample drop animation
-/// 
+///
 /// Only shows on first launch.
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
-  
+
   /// Check if onboarding has been completed
   static Future<bool> isCompleted() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool('onboarding_completed') ?? false;
   }
-  
+
   /// Mark onboarding as completed
   static Future<void> markCompleted() async {
     final prefs = await SharedPreferences.getInstance();
@@ -38,7 +38,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   final PageController _pageController = PageController();
   int _currentPage = 0;
   double _pageOffset = 0.0; // For parallax effect
-  
+
   // Demo animation controllers
   late AnimationController _demoDropController;
   late Animation<double> _demoDropFall;
@@ -49,7 +49,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   @override
   void initState() {
     super.initState();
-    
+
     // Demo drop animation
     _demoDropController = AnimationController(
       vsync: this,
@@ -64,12 +64,12 @@ class _OnboardingScreenState extends State<OnboardingScreen>
         curve: const Interval(0.7, 1.0, curve: Curves.easeOut),
       ),
     );
-    
+
     _demoRippleController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2000),
     );
-    
+
     // Listen to page scroll for parallax
     _pageController.addListener(_onPageScroll);
   }
@@ -90,10 +90,10 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
   void _onPageChanged(int page) {
     setState(() => _currentPage = page);
-    
+
     // Haptic feedback on page change
     HapticService.softTap();
-    
+
     // Start demo animation on last page
     if (page == 2) {
       Future.delayed(const Duration(milliseconds: 500), _startDemoAnimation);
@@ -103,19 +103,19 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   void _startDemoAnimation() async {
     // Guard against calling after dispose
     if (!mounted || _currentPage != 2) return;
-    
+
     _demoDropController.forward();
-    
+
     await Future.delayed(const Duration(milliseconds: 1200));
     if (!mounted || _currentPage != 2) return;
-    
+
     setState(() => _showDemoRipple = true);
     _demoRippleController.forward();
-    
+
     // Reset and loop
     await Future.delayed(const Duration(milliseconds: 2500));
     if (!mounted || _currentPage != 2) return;
-    
+
     _demoDropController.reset();
     _demoRippleController.reset();
     setState(() => _showDemoRipple = false);
@@ -125,7 +125,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   void _completeOnboarding() async {
     await OnboardingScreen.markCompleted();
     if (!mounted) return;
-    
+
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         pageBuilder: (context, animation, _) => const HomeScreen(),
@@ -152,12 +152,10 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final fontScale = DropTheme.fontScale(context);
-    
+
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
-          gradient: DropTheme.timeAwareGradient,
-        ),
+        decoration: BoxDecoration(gradient: DropTheme.timeAwareGradient),
         child: SafeArea(
           child: Column(
             children: [
@@ -178,7 +176,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                   ),
                 ),
               ),
-              
+
               // Main content
               Expanded(
                 child: PageView(
@@ -191,7 +189,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                   ],
                 ),
               ),
-              
+
               // Page indicator and continue button
               Padding(
                 padding: EdgeInsets.only(
@@ -218,9 +216,9 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                         );
                       }),
                     ),
-                    
+
                     const SizedBox(height: 32),
-                    
+
                     // Continue button
                     GestureDetector(
                       onTap: _nextPage,
@@ -261,8 +259,10 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
   Widget _buildWelcomePage(Size size, double fontScale) {
     // Parallax offset for this page (page 0)
-    final parallaxOffset = (_pageOffset - 0) * size.width * 0.15;
-    
+    final parallaxOffset = MediaQuery.disableAnimationsOf(context)
+        ? 0.0
+        : (_pageOffset - 0) * size.width * 0.15;
+
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -276,30 +276,26 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             glowBlur: 40,
           ),
         ),
-        
+
         SizedBox(height: DropTheme.spacing(context, 40)),
-        
+
         // Title - moves medium speed
         Transform.translate(
           offset: Offset(parallaxOffset * 0.5, 0),
           child: Text(
             'DROP',
-            style: DropTheme.titleStyle.copyWith(
-              fontSize: 48 * fontScale,
-            ),
+            style: DropTheme.titleStyle.copyWith(fontSize: 48 * fontScale),
           ),
         ),
-        
+
         SizedBox(height: DropTheme.spacing(context, 16)),
-        
+
         // Tagline - moves faster (foreground layer)
         Transform.translate(
           offset: Offset(parallaxOffset * 0.7, 0),
           child: Text(
             'Let it go.',
-            style: DropTheme.taglineStyle.copyWith(
-              fontSize: 18 * fontScale,
-            ),
+            style: DropTheme.taglineStyle.copyWith(fontSize: 18 * fontScale),
           ),
         ),
       ],
@@ -315,15 +311,15 @@ class _OnboardingScreenState extends State<OnboardingScreen>
           // Philosophy statements
           _buildPhilosophyLine('No judgments.', fontScale),
           SizedBox(height: DropTheme.spacing(context, 24)),
-          _buildPhilosophyLine('No storage.', fontScale),
+          _buildPhilosophyLine('No history.', fontScale),
           SizedBox(height: DropTheme.spacing(context, 24)),
           _buildPhilosophyLine('Just release.', fontScale),
-          
+
           SizedBox(height: DropTheme.spacing(context, 60)),
-          
+
           // Explanation
           Text(
-            'One thought per day.\nWrite it. Drop it. Let it go.',
+            'One thought at a time.\nWrite it. Drop it. Let it go.',
             textAlign: TextAlign.center,
             style: DropTheme.hintStyle.copyWith(
               fontSize: 14 * fontScale,
@@ -349,7 +345,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   Widget _buildDemoPage(Size size, double fontScale) {
     final impactY = size.height * 0.45;
     final startY = size.height * 0.15;
-    
+
     return Stack(
       alignment: Alignment.center,
       children: [
@@ -357,12 +353,15 @@ class _OnboardingScreenState extends State<OnboardingScreen>
         AnimatedBuilder(
           animation: _demoDropController,
           builder: (context, child) {
-            final currentY = startY + (_demoDropFall.value * (impactY - startY));
-            
+            final currentY =
+                startY + (_demoDropFall.value * (impactY - startY));
+
             return Positioned(
-              top: currentY,
+              top: MediaQuery.disableAnimationsOf(context) ? startY : currentY,
               child: Opacity(
-                opacity: _demoDropFade.value.clamp(0.0, 1.0),
+                opacity: MediaQuery.disableAnimationsOf(context)
+                    ? 1
+                    : _demoDropFade.value.clamp(0.0, 1.0),
                 child: WaterDrop(
                   size: 30,
                   showGlow: true,
@@ -373,26 +372,33 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             );
           },
         ),
-        
+
         // Ripple effect on impact
-        if (_showDemoRipple)
+        if (_showDemoRipple && !MediaQuery.disableAnimationsOf(context))
           Positioned(
-            top: impactY + 10,
+            // RippleEffect paints circles. Flattening the whole canvas gives
+            // the lake a side-view perspective and keeps the impact point on
+            // the droplet's vertical axis.
+            top: impactY - 28,
             child: AnimatedBuilder(
               animation: _demoRippleController,
               builder: (context, child) {
                 return Opacity(
                   opacity: (1 - _demoRippleController.value).clamp(0.0, 1.0),
-                  child: RippleEffect(
-                    size: 200 * (0.5 + _demoRippleController.value * 0.5),
-                    animate: false,
-                    circleCount: 3,
+                  child: Transform.scale(
+                    scaleX: 0.5 + _demoRippleController.value * 0.5,
+                    scaleY: 0.22,
+                    child: const RippleEffect(
+                      size: 200,
+                      animate: false,
+                      circleCount: 3,
+                    ),
                   ),
                 );
               },
             ),
           ),
-        
+
         // Instructions
         Positioned(
           bottom: size.height * 0.15,
@@ -400,9 +406,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             children: [
               Text(
                 'Watch it disappear.',
-                style: DropTheme.bodyStyle.copyWith(
-                  fontSize: 20 * fontScale,
-                ),
+                style: DropTheme.bodyStyle.copyWith(fontSize: 20 * fontScale),
               ),
               SizedBox(height: DropTheme.spacing(context, 16)),
               Text(

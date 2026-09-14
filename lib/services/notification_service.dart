@@ -5,7 +5,7 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz_data;
 
 /// NOTIFICATION SERVICE - Daily Reminder System
-/// 
+///
 /// Features:
 /// - Schedule daily reminder at user's chosen time
 /// - Calming notification messages
@@ -15,17 +15,21 @@ class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
   NotificationService._internal();
-  
-  final FlutterLocalNotificationsPlugin _notifications = 
+
+  final FlutterLocalNotificationsPlugin _notifications =
       FlutterLocalNotificationsPlugin();
-  
+
   SharedPreferences? _prefs;
-  
+
   static const String _enabledKey = 'reminder_enabled';
   static const String _hourKey = 'reminder_hour';
   static const String _minuteKey = 'reminder_minute';
-  static const int _notificationId = 1;
-  
+
+  // One weekly-repeating notification per weekday (Monday=1..Sunday=7), each
+  // with its own message, so the reminder actually rotates day to day
+  // instead of repeating whatever message happened to be picked once.
+  static const int _notificationIdBase = 100;
+
   // Calming reminder messages
   static const List<String> _reminderMessages = [
     "Take a moment to release something.",
@@ -36,34 +40,36 @@ class NotificationService {
     "Time to release and breathe.",
     "Drop one thought today.",
   ];
-  
+
   /// Initialize the notification service
   Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
-    
+
     // Initialize timezone
     tz_data.initializeTimeZones();
-    
+
     // Android settings
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
-    
+    const androidSettings = AndroidInitializationSettings(
+      '@mipmap/launcher_icon',
+    );
+
     // iOS settings
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
       requestSoundPermission: true,
     );
-    
+
     const initSettings = InitializationSettings(
       android: androidSettings,
       iOS: iosSettings,
     );
-    
+
     await _notifications.initialize(
       initSettings,
       onDidReceiveNotificationResponse: _onNotificationTap,
     );
-    
+
     // Re-schedule if reminder was enabled
     if (isReminderEnabled) {
       await scheduleReminder(
@@ -71,36 +77,41 @@ class NotificationService {
       );
     }
   }
-  
+
   void _onNotificationTap(NotificationResponse response) {
     // App will be opened when notification is tapped
     // No additional action needed - just opens the app
   }
-  
+
   /// Check if reminders are enabled
   bool get isReminderEnabled => _prefs?.getBool(_enabledKey) ?? false;
-  
+
   /// Get reminder hour (default: 20 = 8 PM)
   int get reminderHour => _prefs?.getInt(_hourKey) ?? 20;
-  
+
   /// Get reminder minute (default: 0)
   int get reminderMinute => _prefs?.getInt(_minuteKey) ?? 0;
-  
+
   /// Get reminder time as TimeOfDay
-  TimeOfDay get reminderTime => TimeOfDay(hour: reminderHour, minute: reminderMinute);
-  
+  TimeOfDay get reminderTime =>
+      TimeOfDay(hour: reminderHour, minute: reminderMinute);
+
   /// Request notification permissions (iOS)
   Future<bool> requestPermissions() async {
-    final android = _notifications.resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>();
-    final ios = _notifications.resolvePlatformSpecificImplementation<
-        IOSFlutterLocalNotificationsPlugin>();
-    
+    final android = _notifications
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+    final ios = _notifications
+        .resolvePlatformSpecificImplementation<
+          IOSFlutterLocalNotificationsPlugin
+        >();
+
     if (android != null) {
       final granted = await android.requestNotificationsPermission();
       return granted ?? false;
     }
-    
+
     if (ios != null) {
       final granted = await ios.requestPermissions(
         alert: true,
@@ -109,42 +120,24 @@ class NotificationService {
       );
       return granted ?? false;
     }
-    
+
     return false;
   }
-  
-  /// Schedule daily reminder at specified time
+
+  /// Schedule the daily reminder at the specified time.
+  ///
+  /// Schedules one notification per weekday, each repeating weekly with its
+  /// own message, so the reminder text actually rotates through the week
+  /// instead of a single message repeating forever.
   Future<void> scheduleReminder(TimeOfDay time) async {
     // Cancel any existing reminder
     await cancelReminder();
-    
+
     // Save settings
     await _prefs?.setBool(_enabledKey, true);
     await _prefs?.setInt(_hourKey, time.hour);
     await _prefs?.setInt(_minuteKey, time.minute);
-    
-    // Calculate next occurrence of scheduled time
-    final now = tz.TZDateTime.now(tz.local);
-    var scheduledDate = tz.TZDateTime(
-      tz.local,
-      now.year,
-      now.month,
-      now.day,
-      time.hour,
-      time.minute,
-    );
-    
-    // If time has passed today, schedule for tomorrow
-    if (scheduledDate.isBefore(now)) {
-      scheduledDate = scheduledDate.add(const Duration(days: 1));
-    }
-    
-    // Random calming message
-    final message = _reminderMessages[
-      DateTime.now().millisecondsSinceEpoch % _reminderMessages.length
-    ];
-    
-    // Notification details
+
     const androidDetails = AndroidNotificationDetails(
       'drop_daily_reminder',
       'Daily Reminders',
@@ -155,38 +148,59 @@ class NotificationService {
       enableVibration: true,
       playSound: true,
     );
-    
+
     const iosDetails = DarwinNotificationDetails(
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
     );
-    
+
     const notificationDetails = NotificationDetails(
       android: androidDetails,
       iOS: iosDetails,
     );
-    
-    // Schedule daily repeating notification
-    await _notifications.zonedSchedule(
-      _notificationId,
-      'DROP',
-      message,
-      scheduledDate,
-      notificationDetails,
-      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-      matchDateTimeComponents: DateTimeComponents.time, // Repeat daily
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-    );
+
+    final now = tz.TZDateTime.now(tz.local);
+
+    for (var weekday = DateTime.monday; weekday <= DateTime.sunday; weekday++) {
+      // Next occurrence of this weekday at the chosen time.
+      var scheduledDate = tz.TZDateTime(
+        tz.local,
+        now.year,
+        now.month,
+        now.day,
+        time.hour,
+        time.minute,
+      );
+      while (scheduledDate.weekday != weekday || scheduledDate.isBefore(now)) {
+        scheduledDate = scheduledDate.add(const Duration(days: 1));
+      }
+
+      final message =
+          _reminderMessages[(weekday - 1) % _reminderMessages.length];
+
+      await _notifications.zonedSchedule(
+        _notificationIdBase + weekday,
+        'DROP',
+        message,
+        scheduledDate,
+        notificationDetails,
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+      );
+    }
   }
-  
-  /// Cancel scheduled reminder
+
+  /// Cancel scheduled reminders
   Future<void> cancelReminder() async {
     await _prefs?.setBool(_enabledKey, false);
-    await _notifications.cancel(_notificationId);
+    for (var weekday = DateTime.monday; weekday <= DateTime.sunday; weekday++) {
+      await _notifications.cancel(_notificationIdBase + weekday);
+    }
   }
-  
+
   /// Toggle reminder on/off
   Future<void> toggleReminder(bool enabled, {TimeOfDay? time}) async {
     if (enabled) {

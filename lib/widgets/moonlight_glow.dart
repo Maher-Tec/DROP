@@ -3,18 +3,14 @@ import 'package:flutter/material.dart';
 import '../config/theme.dart';
 
 /// MOONLIGHT GLOW - Premium night mode effect
-/// 
+///
 /// Creates a soft, dreamy moon reflection on the water
 /// with gentle shimmer animation. Only visible at night.
 class MoonlightGlow extends StatefulWidget {
   final double size;
   final bool animate;
-  
-  const MoonlightGlow({
-    super.key,
-    this.size = 200,
-    this.animate = true,
-  });
+
+  const MoonlightGlow({super.key, this.size = 200, this.animate = true});
 
   @override
   State<MoonlightGlow> createState() => _MoonlightGlowState();
@@ -23,7 +19,7 @@ class MoonlightGlow extends StatefulWidget {
 class _MoonlightGlowState extends State<MoonlightGlow>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  
+
   @override
   void initState() {
     super.initState();
@@ -31,7 +27,7 @@ class _MoonlightGlowState extends State<MoonlightGlow>
       vsync: this,
       duration: const Duration(seconds: 8),
     );
-    
+
     if (widget.animate) {
       _controller.repeat(reverse: true);
     }
@@ -45,19 +41,25 @@ class _MoonlightGlowState extends State<MoonlightGlow>
 
   @override
   Widget build(BuildContext context) {
+    final animate = widget.animate && !MediaQuery.disableAnimationsOf(context);
+    if (animate && !_controller.isAnimating) {
+      _controller.repeat(reverse: true);
+    } else if (!animate) {
+      _controller.stop();
+    }
     // Only show at night
     if (!DropTheme.isNightTime() && !DropTheme.isEvening()) {
       return const SizedBox.shrink();
     }
-    
+
     final isDeepNight = DropTheme.isNightTime();
     final baseOpacity = isDeepNight ? 0.25 : 0.15;
-    
+
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
         final shimmer = sin(_controller.value * pi * 2) * 0.1;
-        
+
         return CustomPaint(
           painter: _MoonlightPainter(
             shimmerValue: _controller.value,
@@ -73,16 +75,13 @@ class _MoonlightGlowState extends State<MoonlightGlow>
 class _MoonlightPainter extends CustomPainter {
   final double shimmerValue;
   final double baseOpacity;
-  
-  _MoonlightPainter({
-    required this.shimmerValue,
-    required this.baseOpacity,
-  });
-  
+
+  _MoonlightPainter({required this.shimmerValue, required this.baseOpacity});
+
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, 0);
-    
+
     // Main moon glow (soft ellipse)
     final moonGradient = RadialGradient(
       center: Alignment.topCenter,
@@ -95,18 +94,17 @@ class _MoonlightPainter extends CustomPainter {
       ],
       stops: const [0.0, 0.3, 0.6, 1.0],
     );
-    
+
     final moonRect = Rect.fromCenter(
       center: center,
       width: size.width,
       height: size.height * 2,
     );
-    
-    final moonPaint = Paint()
-      ..shader = moonGradient.createShader(moonRect);
-    
+
+    final moonPaint = Paint()..shader = moonGradient.createShader(moonRect);
+
     canvas.drawOval(moonRect, moonPaint);
-    
+
     // Shimmer reflection lines on water
     final shimmerPaint = Paint()
       ..color = Colors.white.withValues(
@@ -114,24 +112,25 @@ class _MoonlightPainter extends CustomPainter {
       )
       ..strokeWidth = 1.5
       ..style = PaintingStyle.stroke;
-    
+
     final random = Random(42); // Fixed seed for consistent pattern
-    
+
     for (int i = 0; i < 8; i++) {
       final yOffset = size.height * 0.3 + (i * size.height * 0.08);
       final xVariation = (random.nextDouble() - 0.5) * size.width * 0.3;
       final width = size.width * (0.1 + random.nextDouble() * 0.15);
-      
+
       // Animate horizontal position
-      final animatedX = center.dx + xVariation + sin(shimmerValue * pi * 2 + i) * 10;
-      
+      final animatedX =
+          center.dx + xVariation + sin(shimmerValue * pi * 2 + i) * 10;
+
       final linePaint = Paint()
         ..color = shimmerPaint.color.withValues(
           alpha: (0.1 + (1 - i / 8) * 0.15).clamp(0.0, 0.25),
         )
         ..strokeWidth = 1.0 + (1 - i / 8)
         ..strokeCap = StrokeCap.round;
-      
+
       canvas.drawLine(
         Offset(animatedX - width / 2, yOffset),
         Offset(animatedX + width / 2, yOffset),
@@ -139,8 +138,8 @@ class _MoonlightPainter extends CustomPainter {
       );
     }
   }
-  
+
   @override
-  bool shouldRepaint(_MoonlightPainter oldDelegate) => 
+  bool shouldRepaint(_MoonlightPainter oldDelegate) =>
       oldDelegate.shimmerValue != shimmerValue;
 }
