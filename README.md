@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="img/home (1).jpeg" width="90" alt="DROP icon" />
+<img src="img/dd.png" width="100%" alt="DROP — Touch calm. Let go." />
 
 # 💧 DROP
 
@@ -22,10 +22,11 @@ DROP is a small, open-source Flutter app for expressing a thought and letting it
 
 <div align="center">
 
-<img src="img/home (1).jpeg" width="180" alt="Home screen"/>&nbsp;
-<img src="img/drop with txt (1).jpeg" width="180" alt="Writing a thought"/>&nbsp;
+<img src="img/home (2).jpeg" width="180" alt="Home screen"/>&nbsp;
+<img src="img/drop with txt (2).jpeg" width="180" alt="Writing a thought"/>&nbsp;
+<img src="img/drop without text (2).jpeg" width="180" alt="Wordless drop"/>&nbsp;
 <img src="img/breath (1).jpeg" width="180" alt="Guided breathing"/>&nbsp;
-<img src="img/setting (1).jpeg" width="180" alt="Settings screen"/>
+<img src="img/setting (2).jpeg" width="180" alt="Settings screen"/>
 
 </div>
 
@@ -37,15 +38,6 @@ DROP is a small, open-source Flutter app for expressing a thought and letting it
 - 🕯️ **A quiet ending** — stay beside the lake or return home when ready.
 - 🎧 **Personal touches** — music, volume, theme, reduced-motion, and optional daily reminders. The drop sound effect always plays, even when music is muted.
 - 🧘 **Zero clutter** — no login, no analytics, no ads, no distractions.
-
-<div align="center">
-
-<img src="img/home (2).jpeg" width="180" alt="Home screen alternate"/>&nbsp;
-<img src="img/drop without text (1).jpeg" width="180" alt="Wordless drop"/>&nbsp;
-<img src="img/breath (2).jpeg" width="180" alt="Breathing exercise"/>&nbsp;
-<img src="img/setting (2).jpeg" width="180" alt="Settings alternate"/>
-
-</div>
 
 ## 🔒 Privacy
 
